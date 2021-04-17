@@ -1,3 +1,0 @@
-Testing git ssh configuration
-
-This is terrible. I hate Git
