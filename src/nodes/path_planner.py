@@ -77,7 +77,7 @@ class PathPlanner:
         pass
 
 
-        
+
     @staticmethod
     def world_to_grid(mapdata, wp):
         """
@@ -86,8 +86,16 @@ class PathPlanner:
         :param wp      [Point]         The world coordinate.
         :return        [(int,int)]     The cell position as a tuple.
         """
-        ### REQUIRED CREDIT
-        pass
+        try:
+            mapPos = mapdata.info.origin.position       #location of pos data in mapdata variable
+            mapRes = mapdata.info.resolution            #location of map resolution in variable 
+            xPos = int((wp.x - mapPos.x) / mapRes)      #Eq taken from lab document
+            yPos = int((wp.y - mapPos.y) / mapRes)
+            output = (xPos, yPos)   #Create coordinate for function output
+            return output
+        except Exception as e:
+            print(e)
+            print('Failed on world_to_grid()')
 
 
         
