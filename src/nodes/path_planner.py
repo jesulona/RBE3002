@@ -44,8 +44,10 @@ class PathPlanner:
         :param y [int] The cell Y coordinate.
         :return  [int] The index.
         """
-        ### REQUIRED CREDIT
-        pass
+        index = y * mapdata.info.width + x
+
+        return index
+       
 
 
 
@@ -73,8 +75,15 @@ class PathPlanner:
         :param y       [int]           The cell Y coordinate.
         :return        [Point]         The position in the world.
         """
-        ### REQUIRED CREDIT
-        pass
+        #XyCoordinates to be returned
+        xyCoord = Point()
+
+        #Assign coord values from grid values
+        xyCoord.x = (x + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.x
+        xyCoord.y = (y + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.y
+
+        return xyCoord
+        
 
 
 
