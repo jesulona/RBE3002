@@ -79,8 +79,8 @@ class PathPlanner:
         xyCoord = Point()
 
         #Assign coord values from grid values
-        xyCoord.x = (x + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.X
-        xyCoord.y = (y + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.Y
+        xyCoord.x = (x + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.x
+        xyCoord.y = (y + 0.5) * mapdata.info.resolution + mapdata.info.origin.position.y
 
         return xyCoord
         
