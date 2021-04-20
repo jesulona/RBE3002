@@ -50,7 +50,6 @@ class PathPlanner:
         :return  [int] The index.
         """
         index = y * mapdata.info.width + x
-
         return index
        
 
@@ -66,7 +65,6 @@ class PathPlanner:
         :param y2 [int or float] Y coordinate of second point.
         :return   [float]        The distance.
         """
-        ### REQUIRED CREDIT
         return math.sqrt((x2-x1)**2+(y2-y1)**2) #Using Pythagorian Thm to find the total travelled distance
         
 

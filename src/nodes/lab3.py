@@ -6,7 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Pose
 from tf.transformations import euler_from_quaternion #test
 
-class Lab2:
+class Lab3:
 
     #initialize Pose properties
     px = 0
@@ -22,7 +22,7 @@ class Lab2:
         Class constructor
         """
         ### Initialize node, name it 'lab2'
-        rospy.init_node('lab2',anonymous=True)
+        rospy.init_node('lab3',anonymous=True)
 
         ### Tell ROS that this node subscribes to Odometry messages on the '/odom' topic
         ### When a message is received, call self.update_odometry
@@ -267,4 +267,4 @@ class Lab2:
         rospy.spin()
 
 if __name__ == '__main__':
-    Lab2().run()
+    Lab3().run()
