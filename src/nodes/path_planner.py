@@ -175,8 +175,15 @@ class PathPlanner:
         :return [OccupancyGrid] The grid if the service call was successful,
                                 None in case of error.
         """
-        ### REQUIRED CREDIT
-        rospy.loginfo("Requesting the map")
+        rospy.loginfo("Requesting the map")     #log info
+        try:
+            mapServer = rospy.ServiceProxy('static_map', GetMap)    #Request data from the map server
+            return mapServer.map    #Get the map parameter from the mapServer object
+        except Exception as e:
+            print(e)
+            print('Failed on world_to_grid()')
+            return None
+        
 
 
 
