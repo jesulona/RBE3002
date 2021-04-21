@@ -162,7 +162,42 @@ class PathPlanner:
         :return        [[(int,int)]]   A list of walkable 4-neighbors.
         """
         ### REQUIRED CREDIT
-        pass
+        
+        #if the input values are greater than the mapdata, or less than 0, then
+        # an exception is thrown
+        if (x<0 or x> mapdata.info.width-1 or y<0 or y>mapdata.info.height-1):
+            raise ValueError("Out of Bounds!")
+
+        availibleSpaces = []
+
+        #If x is not the value next to the boarder
+        if (x!=mapdata.info.width-1):
+            #Check is cell is walkable
+            if (self.is_cell_walkable(mapdata, x+1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append(x+1,y)
+
+        #If the x val is not the 0 boundary
+        if (x!=0):
+            #Check is cell is walkable
+            if(self.is_cell_walkable(mapdata, x-1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append(x-1,y)
+        
+        #If y is not the value next to the boarder
+        if (y!=mapdata.info.height-1):
+            #Check is cell is walkable
+            if (self.is_cell_walkable(mapdata, x, y+1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append(x,y+1)
+
+        #If the y val is not the 0 boundary
+        if (y!=0):
+            #Check is cell is walkable
+            if(self.is_cell_walkable(mapdata, x, y-1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append(x,y-1)
+
 
     
     
