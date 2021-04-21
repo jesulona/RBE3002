@@ -4,13 +4,11 @@ import math
 import rospy
 from nav_msgs.srv import GetPlan, GetMap
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
-from geometry_msgs.msg import Point, Pose, PoseStamped
-
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from tf.transformations import euler_from_quaternion, quaternion_from_euler, 
 
 
 class PathPlanner:
-
-
     
     def __init__(self):
         """
@@ -52,7 +50,6 @@ class PathPlanner:
         index = y * mapdata.info.width + x
         return index
        
-
 
 
     @staticmethod
@@ -119,8 +116,37 @@ class PathPlanner:
         :param  path   [[(int,int)]]   The path as a list of tuples (cell coordinates).
         :return        [[PoseStamped]] The path as a list of PoseStamped (world coordinates).
         """
-        ### REQUIRED CREDIT
-        pass
+
+        PoseStampedList = []
+
+        for pathI in range(len(path)):
+            yaw = 0
+
+            if pathI < len(path) -1:
+                currentPoint = pathI
+                nextPoint = pathI +1
+
+                #Calculate distance to final pose
+                dX = nextPoint[0] - currentPoint[0]
+                dY = nextPoint[1] - currentPoint[1]
+
+                #Calculate initial turn angle 
+                angToDest = math.atan2(dY,dX)
+            
+            #XYZ and QuatStuff
+            xyPos = self.grid_to_world(mapdata,everyPath[0],everyPath[1])
+            quatArray = quaternion_from_euler(0,0,angToDest)
+            quatObj = Quaternion(*quatArray)
+
+            #generate and populate a pose
+            aPose = PoseStamped()
+            aPose.pose.position = xyPos
+            aPose.pose.orientation = quatObj
+            aPose.header = mapdata.header
+            PoseStampedList.append(aPose)
+
+        return PoseStampedList
+
 
     
 
