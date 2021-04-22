@@ -259,9 +259,7 @@ class PathPlanner:
                 availibleSpaces.append(x-1,y+1)
 
         return availibleSpaces
-
-
-    
+ 
     
     @staticmethod
     def request_map():
@@ -290,14 +288,27 @@ class PathPlanner:
         :param padding [int]           The number of cells around the obstacles.
         :return        [OccupancyGrid] The C-Space.
         """
-        ### REQUIRED CREDIT
+        mapVals = mapdata.data
+
         rospy.loginfo("Calculating C-Space")
         ## Go through each cell in the occupancy grid
-        ## Inflate the obstacles where necessary
-        # TODO
+        for y in mapdata.info.height:
+            for x in mapdata.info.width:
+                ## Inflate the obstacles where necessary
+                if mapdata.data[] > THRESH:
+                    neighbors = neighbors_of_8()
+                    for each in neighbors:
+                        mapVals[each] = 100
+
+        mapdata.data = mapVals
+        self.pubCSpace(something?)
+                
+         TODO
         ## Create a GridCells message and publish it
-        # TODO
+        gridCells = GridCells()
+
         ## Return the C-space
+        return 
         pass
 
 
