@@ -333,8 +333,12 @@ class PathPlanner:
         :param path [[(int,int)]] The path on the grid (a list of tuples)
         :return     [Path]        A Path message (the coordinates are expressed in the world)
         """
-        ### REQUIRED CREDIT
+        rospy.loginfo("Received path:" + str(path))
+        pathMessage = Path()
+        pathMessage.poses = self.path_to_message(mapdata,path)
+        pathMessage.header = mapdata.header
         rospy.loginfo("Returning a Path message")
+        return pathMessage
 
 
         
