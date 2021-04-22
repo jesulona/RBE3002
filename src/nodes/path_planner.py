@@ -167,7 +167,7 @@ class PathPlanner:
         xRange = range(0,xLim)
         yRange = range(0,yLim)
         
-        freeThreshold = 0.1
+        freeThreshold = 10
 
         if(x in xRange and y in yRange):
             index = self.grid_to_index(mapdata,x,y)
