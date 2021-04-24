@@ -6,7 +6,7 @@ from nav_msgs.srv import GetPlan, GetMap
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, 
-
+from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 
 class PathPlanner:
     
@@ -313,18 +313,29 @@ class PathPlanner:
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
 
+        #creating a frontier to use the priority queue class to follow the sudo code
+        mapFrontier = PriorityQueue()
+        #place start position at the start of the point given
+        mapFrontier.put(start,0)
+
         #Initialize an openList
         openList = {}
         #Initialize a closedList 
         #Put the Starting node on the open list? keave its f at zero?
         closedList= {}
         #while openList is not empty
-        while (len(openList_!=0):
+        while (mapFrontier.empty() is False):
+            topPriority = mapFrontier.get()
             #Find the node with the least f on the open list, call it q
             #pop q off the open list
+            #Confused about the the two above statements
+
             #generate the 8 neighbors of q and set parent to q
             #for each neighbor:
+            for eachNeighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
                 #if neighbor is goal, stop search 
+                if (topPriority == goal):
+                    break
                 #if a node with the same pos as neighbor is in openlist which has a lower f thn neighbor skip this neighbor
                 #if a node with the same pos as neighbor is in closedlist (lower f than neighbor), skip this neighbor, 
                     # otherwise add the node ot the openlist
