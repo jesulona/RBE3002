@@ -313,6 +313,27 @@ class PathPlanner:
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
 
+        #Initialize an openList
+        openList = {}
+        #Initialize a closedList 
+        #Put the Starting node on the open list? keave its f at zero?
+        closedList= {}
+        #while openList is not empty
+        while (len(openList_!=0):
+            #Find the node with the least f on the open list, call it q
+            #pop q off the open list
+            #generate the 8 neighbors of q and set parent to q
+            #for each neighbor:
+                #if neighbor is goal, stop search 
+                #if a node with the same pos as neighbor is in openlist which has a lower f thn neighbor skip this neighbor
+                #if a node with the same pos as neighbor is in closedlist (lower f than neighbor), skip this neighbor, 
+                    # otherwise add the node ot the openlist
+                #end for loop
+            #push q on the closedList
+        #end while loop
+
+        
+
 
     
     @staticmethod
