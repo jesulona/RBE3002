@@ -318,12 +318,13 @@ class PathPlanner:
         #place start position at the start of the point given
         mapFrontier.put(start,0)
 
-        #Initialize an openList
-        openList = {}
-        #Initialize a closedList 
-        closedList= {}
-        closedList[start] =0 #I think this is what it means
-        #while openList is not empty
+        #Initialize a came_from dict
+        came_from = {}
+        came_from[start] = None
+        #Initialize a cost
+        cost= {}
+        cost[start] =0 
+        
         while (mapFrontier.empty() is False):
             #Get the top Priority from the frontier
             topPriority = mapFrontier.get()
@@ -331,7 +332,7 @@ class PathPlanner:
             #generate the 8 neighbors of topPriority
             #for each neighbor:
             for Neighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
-                gVal = closedList[topPriority] #add the topPriority to the closedList of where you've been
+                gVal = cost[topPriority] #add the topPriority to the cost of where you've been
                 #calculate how much it would cost to get to neighbor
                 hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
                 #calculate new total cost
@@ -342,22 +343,35 @@ class PathPlanner:
                     break
                 
                 #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
-                #less than the previous paths in closed list
+                #less than the previous paths in cost list
                 #expand like a spider web
-                if Neighbor not in closedList or totalCost < closedList[Neighbor]:
+                if Neighbor not in cost or totalCost < cost[Neighbor]:
                     #set the current neighbor to the totalCost
-                    closedList[Neighbor] = totalCost
+                    cost[Neighbor] = totalCost
                     #recalculate the hVal
                     hVal = PathPlanner.euclidean_distance(Neighbor[0],Neighbor[1],goal[0],goal[1])
                     #recalulate the total cost as a new variable to not override the previous
                     priority = totalCost + hVal
                     #put the neighbor into the priority list based on the new totalCost, aka it's priority
                     mapFrontier.put(Neighbor, priority)
-                    #add the node ot the openlist
-                    openList[Neighbor] = topPriority
+                    #add the node ot the came_from
+                    came_from[Neighbor] = topPriority
 
-        
+        #starting at the goal, making that your current position
+        currentPos = goal
 
+        #make a list for the path
+        path = []
+        #add the start to your path
+        path.append(goal)
+
+        while currentPos != start:
+            currentPos = came_from[currentPos] 
+            path.append(currentPos)
+
+        path.reverse(path)
+
+        return path
 
     
     @staticmethod
