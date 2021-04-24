@@ -259,9 +259,7 @@ class PathPlanner:
                 availibleSpaces.append(x-1,y+1)
 
         return availibleSpaces
-
-
-    
+ 
     
     @staticmethod
     def request_map():
@@ -290,15 +288,44 @@ class PathPlanner:
         :param padding [int]           The number of cells around the obstacles.
         :return        [OccupancyGrid] The C-Space.
         """
-        ### REQUIRED CREDIT
+        THRESH = 50             #Threshold for shading of a cell
+        newMap = mapdata.data   #Create a copy of existing map to expand obstacles with
+        worldCoordinates = []   #Initialize world coordinate list of obstacles
+
         rospy.loginfo("Calculating C-Space")
-        ## Go through each cell in the occupancy grid
-        ## Inflate the obstacles where necessary
-        # TODO
+
+        ## Determine cspace for each layer of padding
+        for i in padding:
+            ## Go through each cell in the occupancy grid (range used to start on row/col 0)
+            for y in range(mapdata.info.height):
+                for x in range(mapdata.info.width):
+                    ## Inflate the obstacles where necessary
+                    if mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] >= THRESH: 
+                        mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] = 100        #Set to 100 to make it 100% an obstacle
+                        neighbors = PathPlanner.neighbors_of_8(mapdata, x, y)               #Get all walkable cells that neighbor main cell
+                        for each in neighbors:
+                            newMap[PathPlanner.grid_to_index(mapdata, each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
+
+            print('Found all the cspace for padding layer ' + str(i) + ' out of ' + str(padding))
+            mapdata.data = newMap   #Set the mapdta to the new map for use in recursion. 
+
+        ## Convert cspace coordinates to world coordinates
+        for y in range(mapdata.info.height):
+            for x in range(mapdata.info.width):
+                if newMap[self.grid_to_index(mapdata, x, y)] >= THRESH:     #If an obstacle is detected
+                    worldPoint = self.grid_to_world(mapdata, x, y)          #Make a worldpoint out of it
+                    worldCoordinates.append(worldPoint)                     #append to list in order
+
         ## Create a GridCells message and publish it
-        # TODO
+        msg = GridCells()                           #Create GridCells Object
+        msg.cell_height = mapdata.info.resolution   #dims are equal to map resolution
+        msg.cell_width = mapdata.info.resolution
+        msg.cells = worldCoordinates                #Set cell data to the world coordinates of obstacles
+        msg.header = mapdata.header                 #Copy over header
+        self.pubCSpace.publish(msg)                 #Publish to topic
+
         ## Return the C-space
-        pass
+        return mapdata
 
 
     
