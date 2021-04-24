@@ -167,7 +167,7 @@ class PathPlanner:
         xRange = range(0,xLim)
         yRange = range(0,yLim)
         
-        freeThreshold = 0.1
+        freeThreshold = 10
 
         if(x in xRange and y in yRange):
             index = self.grid_to_index(mapdata,x,y)
@@ -333,8 +333,12 @@ class PathPlanner:
         :param path [[(int,int)]] The path on the grid (a list of tuples)
         :return     [Path]        A Path message (the coordinates are expressed in the world)
         """
-        ### REQUIRED CREDIT
+        rospy.loginfo("Received path:" + str(path))
+        pathMessage = Path()
+        pathMessage.poses = self.path_to_message(mapdata,path)
+        pathMessage.header = mapdata.header
         rospy.loginfo("Returning a Path message")
+        return pathMessage
 
 
         
