@@ -327,15 +327,14 @@ class PathPlanner:
         while (mapFrontier.empty() is False):
             #Get the top Priority from the frontier
             topPriority = mapFrontier.get()
-            #Find the node with the least f on the open list, call it q
-            #pop q off the open list
-            #Confused about the the two above statements
 
-            #generate the 8 neighbors of q and set parent to q
+            #generate the 8 neighbors of topPriority
             #for each neighbor:
             for Neighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
                 gVal = closedList[topPriority] #add the topPriority to the closedList of where you've been
+                #calculate how much it would cost to get to neighbor
                 hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
+                #calculate new total cost
                 totalCost = gVal + hVal
 
                 #if neighbor is goal, stop search 
@@ -344,6 +343,7 @@ class PathPlanner:
                 
                 #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
                 #less than the previous paths in closed list
+                #expand like a spider web
                 if Neighbor not in closedList or totalCost < closedList[Neighbor]:
                     #set the current neighbor to the totalCost
                     closedList[Neighbor] = totalCost
