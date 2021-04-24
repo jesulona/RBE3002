@@ -321,10 +321,11 @@ class PathPlanner:
         #Initialize an openList
         openList = {}
         #Initialize a closedList 
-        #Put the Starting node on the open list? keave its f at zero?
         closedList= {}
+        closedList[start] =0 #I think this is what it means
         #while openList is not empty
         while (mapFrontier.empty() is False):
+            #Get the top Priority from the frontier
             topPriority = mapFrontier.get()
             #Find the node with the least f on the open list, call it q
             #pop q off the open list
@@ -332,16 +333,28 @@ class PathPlanner:
 
             #generate the 8 neighbors of q and set parent to q
             #for each neighbor:
-            for eachNeighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
+            for Neighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
+                gVal = closedList[topPriority] #add the topPriority to the closedList of where you've been
+                hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
+                totalCost = gVal + hVal
+
                 #if neighbor is goal, stop search 
                 if (topPriority == goal):
                     break
-                #if a node with the same pos as neighbor is in openlist which has a lower f thn neighbor skip this neighbor
-                #if a node with the same pos as neighbor is in closedlist (lower f than neighbor), skip this neighbor, 
-                    # otherwise add the node ot the openlist
-                #end for loop
-            #push q on the closedList
-        #end while loop
+                
+                #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
+                #less than the previous paths in closed list
+                if Neighbor not in closedList or totalCost < closedList[Neighbor]:
+                    #set the current neighbor to the totalCost
+                    closedList[Neighbor] = totalCost
+                    #recalculate the hVal
+                    hVal = PathPlanner.euclidean_distance(Neighbor[0],Neighbor[1],goal[0],goal[1])
+                    #recalulate the total cost as a new variable to not override the previous
+                    priority = totalCost + hVal
+                    #put the neighbor into the priority list based on the new totalCost, aka it's priority
+                    mapFrontier.put(Neighbor, priority)
+                    #add the node ot the openlist
+                    openList[Neighbor] = topPriority
 
         
 
