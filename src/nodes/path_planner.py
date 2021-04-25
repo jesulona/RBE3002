@@ -345,7 +345,10 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
-
+        
+        #Raise an error is the goal is out bounds, i.e. the goal is an object or in c-space
+        if PathPlanner.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
+            raise ValueError("Goal is Out of Bounds!")
         #creating a frontier to use the priority queue class to follow the sudo code
         mapFrontier = PriorityQueue()
         #place start position at the start of the point given
@@ -381,7 +384,7 @@ class PathPlanner:
                 #calculate new total cost
                 totalCost = gVal + hVal
 
-                #publish list of cells
+                #turnthe neighbor values into a point format
                 
                 xyCoord = self.grid_to_world(mapdata,Neighbor[0],Neighbor[1])
                 
@@ -422,7 +425,7 @@ class PathPlanner:
         #add the start to your path
         path.append(goal)
 
-        print(came_from)
+        #print(came_from)
 
 
         while currentPos != start:
@@ -491,7 +494,7 @@ class PathPlanner:
         """
         mapdata = PathPlanner.request_map()
         self.calc_cspace(mapdata,1)
-        self.a_star(mapdata,(1,1),(11,11))
+        self.a_star(mapdata,(1,1),(30,33))
         rospy.spin()
 
         
