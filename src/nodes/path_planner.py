@@ -5,8 +5,9 @@ import rospy
 from nav_msgs.srv import GetPlan, GetMap
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
-from tf.transformations import euler_from_quaternion, quaternion_from_euler, 
+from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
+from copy import deepcopy
 
 class PathPlanner:
     
@@ -20,12 +21,12 @@ class PathPlanner:
         
         ## Create a new service called "plan_path" that accepts messages of
         ## type GetPlan and calls self.plan_path() when a message is received
-        self.serv = rospy.Service('plan_path', GetPlan, self.plan_path())
+        self.serv = rospy.Service('plan_path', GetPlan, self.plan_path)
         
         ## Create a publisher for the C-space (the enlarged occupancy grid)
         ## The topic is "/path_planner/cspace", the message type is GridCells
         self.pubCSpace = rospy.Publisher('/path_planner/cspace', GridCells, queue_size = 10)
-        
+        self.pubObstacle = rospy.Publisher('/path_planner/obs', GridCells, queue_size = 10)
         ## Create publishers for A* (expanded cells, frontier, ...)
         ## Choose a the topic names, the message type is GridCells
         self.pubAStar = rospy.Publisher('/path_planner/a_star_planning', GridCells, queue_size = 10)
@@ -170,7 +171,7 @@ class PathPlanner:
         freeThreshold = 10
 
         if(x in xRange and y in yRange):
-            index = self.grid_to_index(mapdata,x,y)
+            index = PathPlanner.grid_to_index(mapdata,x,y)
             if mapdata.data[index] < freeThreshold:
                 return True
         
@@ -201,28 +202,28 @@ class PathPlanner:
             #Check is cell is walkable
             if (PathPlanner.is_cell_walkable(mapdata, x+1, y)):
                 #If cell can be reached, add it to the list of avaible spaces
-                availibleSpaces.append(x+1,y)
+                availibleSpaces.append((x+1,y))
 
         #If the x val is not the 0 boundary
         if (x!=0):
             #Check is cell is walkable
             if(PathPlanner.is_cell_walkable(mapdata, x-1, y)):
                 #If cell can be reached, add it to the list of avaible spaces
-                availibleSpaces.append(x-1,y)
+                availibleSpaces.append((x-1,y))
         
         #If y is not the value next to the boarder
         if (y!=mapdata.info.height-1):
             #Check is cell is walkable
             if (PathPlanner.is_cell_walkable(mapdata, x, y+1)):
                 #If cell can be reached, add it to the list of avaible spaces
-                availibleSpaces.append(x,y+1)
+                availibleSpaces.append((x,y+1))
 
         #If the y val is not the 0 boundary
         if (y!=0):
             #Check is cell is walkable
             if(PathPlanner.is_cell_walkable(mapdata, x, y-1)):
                 #If cell can be reached, add it to the list of avaible spaces
-                availibleSpaces.append(x,y-1)
+                availibleSpaces.append((x,y-1))
 
         return availibleSpaces
         
@@ -244,19 +245,19 @@ class PathPlanner:
         
         if(x!=0 and y!=0):
             if(PathPlanner.is_cell_walkable(mapdata, x-1,y-1)):
-                availibleSpaces.append(x-1,y-1)
+                availibleSpaces.append((x-1,y-1))
 
         if(x!=mapdata.info.width-1 and y!=mapdata.info.height-1):
             if(PathPlanner.is_cell_walkable(mapdata, x+1,y+1)):
-                availibleSpaces.append(x+1,y+1)
+                availibleSpaces.append((x+1,y+1))
 
         if(x!=mapdata.info.width-1 and y!=0):
             if(PathPlanner.is_cell_walkable(mapdata, x+1,y-1)):
-                availibleSpaces.append(x+1,y-1)
+                availibleSpaces.append((x+1,y-1))
 
         if(x!=0 and y!=mapdata.info.height-1):
             if(PathPlanner.is_cell_walkable(mapdata, x-1,y+1)):
-                availibleSpaces.append(x-1,y+1)
+                availibleSpaces.append((x-1,y+1))
 
         return availibleSpaces
  
@@ -271,7 +272,7 @@ class PathPlanner:
         rospy.loginfo("Requesting the map")     #log info
         try:
             mapServer = rospy.ServiceProxy('static_map', GetMap)    #Request data from the map server
-            return mapServer.map    #Get the map parameter from the mapServer object
+            return mapServer().map    #Get the map parameter from the mapServer object
         except Exception as e:
             print(e)
             print('Failed on world_to_grid()')
@@ -288,26 +289,26 @@ class PathPlanner:
         :param padding [int]           The number of cells around the obstacles.
         :return        [OccupancyGrid] The C-Space.
         """
-        THRESH = 50             #Threshold for shading of a cell
-        newMap = mapdata.data   #Create a copy of existing map to expand obstacles with
-        worldCoordinates = []   #Initialize world coordinate list of obstacles
+        THRESH = 50                     #Threshold for shading of a cell
+        newMap = list(mapdata.data)     #Create a copy of existing map to expand obstacles with
+        worldCoordinates = []           #Initialize world coordinate list of obstacles
 
         rospy.loginfo("Calculating C-Space")
 
         ## Determine cspace for each layer of padding
-        for i in padding:
+        for i in range(padding):
             ## Go through each cell in the occupancy grid (range used to start on row/col 0)
             for y in range(mapdata.info.height):
                 for x in range(mapdata.info.width):
                     ## Inflate the obstacles where necessary
                     if mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] >= THRESH: 
-                        mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] = 100        #Set to 100 to make it 100% an obstacle
+                        newMap[PathPlanner.grid_to_index(mapdata, x, y)] = 100        #Set to 100 to make it 100% an obstacle
                         neighbors = PathPlanner.neighbors_of_8(mapdata, x, y)               #Get all walkable cells that neighbor main cell
                         for each in neighbors:
                             newMap[PathPlanner.grid_to_index(mapdata, each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
 
             print('Found all the cspace for padding layer ' + str(i) + ' out of ' + str(padding))
-            mapdata.data = newMap   #Set the mapdta to the new map for use in recursion. 
+            mapdata.data = deepcopy(newMap)   #Set the mapdata to the new map for use in recursion. 
 
         ## Convert cspace coordinates to world coordinates
         for y in range(mapdata.info.height):
@@ -321,7 +322,7 @@ class PathPlanner:
         msg.cell_height = mapdata.info.resolution   #dims are equal to map resolution
         msg.cell_width = mapdata.info.resolution
         msg.cells = worldCoordinates                #Set cell data to the world coordinates of obstacles
-        msg.header = mapdata.header                 #Copy over header
+        msg.header.frame_id = mapdata.header.frame_id               #Copy over header
         self.pubCSpace.publish(msg)                 #Publish to topic
 
         ## Return the C-space
@@ -456,6 +457,8 @@ class PathPlanner:
         """
         Runs the node until Ctrl-C is pressed.
         """
+        mapdata = PathPlanner.request_map()
+        self.calc_cspace(mapdata,1)
         rospy.spin()
 
 
