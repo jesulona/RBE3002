@@ -27,6 +27,7 @@ class PathPlanner:
         ## The topic is "/path_planner/cspace", the message type is GridCells
         self.pubCSpace = rospy.Publisher('/path_planner/cspace', GridCells, queue_size = 10)
         self.pubObstacle = rospy.Publisher('/path_planner/obs', GridCells, queue_size = 10)
+        self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
         ## Create publishers for A* (expanded cells, frontier, ...)
         ## Choose a the topic names, the message type is GridCells
         self.pubAStar = rospy.Publisher('/path_planner/a_star_planning', GridCells, queue_size = 10)
@@ -356,10 +357,20 @@ class PathPlanner:
         #Initialize a cost
         cost= {}
         cost[start] =0 
+
+        ## Create a GridCells message
+        neighbourViz = GridCells()                           #Create GridCells Object
+        neighbourViz.cell_height = mapdata.info.resolution   #dims are equal to map resolution
+        neighbourViz.cell_width = mapdata.info.resolution
+        listofCells = list(neighbourViz.cells)
         
         while (mapFrontier.empty() is False):
             #Get the top Priority from the frontier
             topPriority = mapFrontier.get()
+
+            #if neighbor is goal, stop search 
+            if (topPriority == goal):
+                break
 
             #generate the 8 neighbors of topPriority
             #for each neighbor:
@@ -370,9 +381,22 @@ class PathPlanner:
                 #calculate new total cost
                 totalCost = gVal + hVal
 
-                #if neighbor is goal, stop search 
-                if (topPriority == goal):
-                    break
+                #publish list of cells
+                
+                xyCoord = self.grid_to_world(mapdata,Neighbor[0],Neighbor[1])
+                
+
+                #listofCells.append(xyCoord) 
+                neighbourViz.cells.append(xyCoord)
+                
+                print(neighbourViz.cells)
+                #print("listofcells" + str(listofCells))
+                #Set cell data to the world coordinates of obstacles
+                neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
+                self.pubWaveFront.publish(neighbourViz)                 #Publish to topic
+
+
+               
                 
                 #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
                 #less than the previous paths in cost list
@@ -387,6 +411,7 @@ class PathPlanner:
                     #put the neighbor into the priority list based on the new totalCost, aka it's priority
                     mapFrontier.put(Neighbor, priority)
                     #add the node ot the came_from
+                    #came_from.update({Neighbour : topPriority})
                     came_from[Neighbor] = topPriority
 
         #starting at the goal, making that your current position
@@ -397,11 +422,14 @@ class PathPlanner:
         #add the start to your path
         path.append(goal)
 
+        print(came_from)
+
+
         while currentPos != start:
             currentPos = came_from[currentPos] 
             path.append(currentPos)
 
-        path.reverse(path)
+        path.reverse()
 
         return path
 
@@ -463,6 +491,7 @@ class PathPlanner:
         """
         mapdata = PathPlanner.request_map()
         self.calc_cspace(mapdata,1)
+        self.a_star(mapdata,(1,1),(11,11))
         rospy.spin()
 
         
