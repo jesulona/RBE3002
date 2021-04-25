@@ -28,6 +28,7 @@ class PathPlanner:
         self.pubCSpace = rospy.Publisher('/path_planner/cspace', GridCells, queue_size = 10)
         self.pubObstacle = rospy.Publisher('/path_planner/obs', GridCells, queue_size = 10)
         self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
+        self.pubPath = rospy.Publisher('/path_planner/path', GridCells, queue_size = 10)
         ## Create publishers for A* (expanded cells, frontier, ...)
         ## Choose a the topic names, the message type is GridCells
         self.pubAStar = rospy.Publisher('/path_planner/a_star_planning', GridCells, queue_size = 10)
@@ -361,12 +362,18 @@ class PathPlanner:
         cost= {}
         cost[start] =0 
 
-        ## Create a GridCells message
+        ## Create a GridCells message for visited cells
         neighbourViz = GridCells()                           #Create GridCells Object
         neighbourViz.cell_height = mapdata.info.resolution   #dims are equal to map resolution
         neighbourViz.cell_width = mapdata.info.resolution
         listofCells = list(neighbourViz.cells)
         
+        ## Create a GridCells message for path cells
+        pathCells = GridCells()                           #Create GridCells Object
+        pathCells.cell_height = mapdata.info.resolution   #dims are equal to map resolution
+        pathCells.cell_width = mapdata.info.resolution
+        listOfPathCells = list(pathCells.cells)
+
         while (mapFrontier.empty() is False):
             #Get the top Priority from the frontier
             topPriority = mapFrontier.get()
@@ -433,6 +440,16 @@ class PathPlanner:
             path.append(currentPos)
 
         path.reverse()
+        deepcopyofpath = deepcopy(path)
+        print(path)
+
+        for everyLoc in path:
+            xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
+            print("hello")
+            pathCells.cells.append(xyCoordPath)
+            pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
+            self.pubPath.publish(pathCells)
+            rospy.sleep(0.05)      
 
         return path
 
