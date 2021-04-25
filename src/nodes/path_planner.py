@@ -9,6 +9,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
 
+
 class PathPlanner:
     
     def __init__(self):
@@ -511,7 +512,7 @@ class PathPlanner:
         """
         mapdata = PathPlanner.request_map()
         self.calc_cspace(mapdata,1)
-        self.a_star(mapdata,(1,1),(30,33))
+        self.a_star(mapdata,(1,1),(34,7))
         rospy.spin()
 
         
