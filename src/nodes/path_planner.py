@@ -8,6 +8,7 @@ from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
+from nodes import bot
 
 
 class PathPlanner:
@@ -475,7 +476,7 @@ class PathPlanner:
         """
         rospy.loginfo("Received path:" + str(path))
         pathMessage = Path()
-        pathMessage.poses = self.path_to_message(mapdata,path)
+        pathMessage.poses = self.path_to_poses(mapdata,path)
         pathMessage.header = mapdata.header
         rospy.loginfo("Returning a Path message")
         return pathMessage
