@@ -481,7 +481,7 @@ class PathPlanner:
         rospy.loginfo("Received path:" + str(path))
         pathMessage = Path()
         pathMessage.poses = self.path_to_poses(mapdata,path)
-        pathMessage.header = mapdata.header
+        pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
         return pathMessage
 
@@ -507,7 +507,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        return self.path_to_message(mapdata, waypoints)
+        return self.path_to_message(mapdata, path)
 
 
     
