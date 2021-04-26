@@ -4,8 +4,8 @@ import rospy, math, time
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion
-from tf.transformations import euler_from_quaternion
-from nodes import path_planner
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+import path_planner
 from nav_msgs.srv import GetPlan
 
 class Lab3:
@@ -34,7 +34,6 @@ class Lab3:
         ### When a message is received, call self.go_to
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.executePath)
 
-        subPathPlan = rospy.Subscriber()
     
         rospy.sleep(1.0)
       
@@ -278,11 +277,11 @@ class Lab3:
         PSstart = PoseStamped()
         PSstart.pose.position = Point(self.px,self.py,0)
         quat = quaternion_from_euler(0,0,self.pth)
-        PSstart.pose.orientation = Quaternion(*quat)
+        PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
 
         #Request path Planniung Service 
         path_planner = rospy.ServiceProxy('plan_path',GetPlan)
-        req = nav_msgs.GetPlan()
+        req = GetPlan()
         resp = path_planner(PSstart,msg,ToleranceVal)
         
         #Extract Waypoints - start position??
