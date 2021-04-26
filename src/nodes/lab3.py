@@ -271,7 +271,9 @@ class Lab3:
         records start location and requests plan from path planner
         obtains plan and executes all posedStamped waypoints
         """
-        ToleranceVal = 0.01
+        ToleranceVal = 0.1
+
+        rospy.wait_for_service('plan_path')
 
         #Robot's Current Position
         PSstart = PoseStamped()
@@ -280,8 +282,12 @@ class Lab3:
         PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
 
         #Request path Planniung Service 
-        path_planner = rospy.ServiceProxy('plan_path',GetPlan)
         req = GetPlan()
+        path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
+        #req.request.start = PSstart
+        # req.start = PSstart
+        # req.goal = msg
+        # req.tolerance = ToleranceVal
         resp = path_planner(PSstart,msg,ToleranceVal)
         
         #Extract Waypoints - start position??

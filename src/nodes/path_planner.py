@@ -22,7 +22,7 @@ class PathPlanner:
         
         ## Create a new service called "plan_path" that accepts messages of
         ## type GetPlan and calls self.plan_path() when a message is received
-        self.serv = rospy.Service('plan_path', GetPlan, self.plan_path)
+        self.serv = rospy.Service('/plan_path', GetPlan, self.plan_path)
         
         ## Create a publisher for the C-space (the enlarged occupancy grid)
         ## The topic is "/path_planner/cspace", the message type is GridCells
@@ -131,14 +131,17 @@ class PathPlanner:
                 nextPoint = pathI +1
 
                 #Calculate distance to final pose
-                dX = nextPoint[0] - currentPoint[0]
-                dY = nextPoint[1] - currentPoint[1]
+                currPoint = path[currentPoint]
+                nxtPoint = path[nextPoint]
+
+                dX = nxtPoint[0]- currPoint[0]
+                dY = nxtPoint[1]- currPoint[1]
 
                 #Calculate initial turn angle 
                 angToDest = math.atan2(dY,dX)
             
             #XYZ and QuatStuff
-            xyPos = self.grid_to_world(mapdata,everyPath[0],everyPath[1])
+            xyPos = PathPlanner.grid_to_world(mapdata,path[pathI][0],path[pathI][0])
             quatArray = quaternion_from_euler(0,0,angToDest)
             quatObj = Quaternion(*quatArray)
 
