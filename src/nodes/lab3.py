@@ -3,8 +3,10 @@
 import rospy, math, time
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import Twist, Pose
-from tf.transformations import euler_from_quaternion #test
+from geometry_msgs.msg import Twist, Pose, Point, Quaternion
+from tf.transformations import euler_from_quaternion,#test
+from nodes import path_planner
+from nav_msgs.srv import GetPlan
 
 class Lab3:
 
@@ -31,6 +33,8 @@ class Lab3:
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic
         ### When a message is received, call self.go_to
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
+
+        subPathPlan = rospy.Subscriber()
     
         rospy.sleep(1.0)
       
@@ -261,6 +265,26 @@ class Lab3:
         # TODO
         pass # delete this when you implement your code
 
+
+    def executePath(self, msg)
+        """
+        Takes in a Path message and executes all posedStamped locations
+
+        """
+        #Robot's Current Position
+        PSstart = PoseStamped()
+        PSstart.pose.position = Point(self.px,self.py,0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        PSstart.pose.orientation = Quaternion(*quat)
+
+        #Request path Planniung Service 
+        path_planner = rospy.ServiceProxy('plan_path',GetPlan())
+
+        Point(self.px,self.py,self.pth)
+        PathplannerObject = path_planner()
+
+        for everyWaypoint in msgWaypointList:
+            self.go_to(everyWaypoint)
 
 
     def run(self):
