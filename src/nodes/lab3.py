@@ -4,7 +4,7 @@ import rospy, math, time
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion
-from tf.transformations import euler_from_quaternion,#test
+from tf.transformations import euler_from_quaternion
 from nodes import path_planner
 from nav_msgs.srv import GetPlan
 
@@ -266,7 +266,7 @@ class Lab3:
         pass # delete this when you implement your code
 
 
-    def executePath(self, msg)
+    def executePath(self, msg):
         """
         Takes in a Path message as the goal
         records start location and requests plan from path planner
