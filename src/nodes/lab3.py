@@ -32,7 +32,7 @@ class Lab3:
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic
         ### When a message is received, call self.go_to
-        subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
+        subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.executePath)
 
         subPathPlan = rospy.Subscriber()
     
@@ -268,9 +268,12 @@ class Lab3:
 
     def executePath(self, msg)
         """
-        Takes in a Path message and executes all posedStamped locations
-
+        Takes in a Path message as the goal
+        records start location and requests plan from path planner
+        obtains plan and executes all posedStamped waypoints
         """
+        ToleranceVal = 0.01
+
         #Robot's Current Position
         PSstart = PoseStamped()
         PSstart.pose.position = Point(self.px,self.py,0)
@@ -278,10 +281,12 @@ class Lab3:
         PSstart.pose.orientation = Quaternion(*quat)
 
         #Request path Planniung Service 
-        path_planner = rospy.ServiceProxy('plan_path',GetPlan())
-
-        Point(self.px,self.py,self.pth)
-        PathplannerObject = path_planner()
+        path_planner = rospy.ServiceProxy('plan_path',GetPlan)
+        req = nav_msgs.GetPlan()
+        resp = path_planner(PSstart,msg,ToleranceVal)
+        
+        #Extract Waypoints - start position??
+        msgWaypointList = resp.plan.poses
 
         for everyWaypoint in msgWaypointList:
             self.go_to(everyWaypoint)
