@@ -167,7 +167,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Axes: true
         C-Space GridCells: true
         DepthCloud: true
@@ -181,6 +180,7 @@ Visualization Manager:
         RobotModel: true
         TF: true
         Value: true
+        path: true
         wave: true
       Zoom Factor: 1
     - Angle Tolerance: 0.10000000149011612
@@ -360,7 +360,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 131.49310302734375
+      Scale: 88.07957458496094
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 2.221534490585327
