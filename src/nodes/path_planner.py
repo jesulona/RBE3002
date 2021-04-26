@@ -349,9 +349,14 @@ class PathPlanner:
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
         
-        #Raise an error is the goal is out bounds, i.e. the goal is an object or in c-space
+        #Raise an error if the goal is out bounds, i.e. the goal is an object or in c-space
         if PathPlanner.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Goal is Out of Bounds!")
+
+        #Raise an error is the start is out bounds, i.e. the start is an object or in c-space
+        if PathPlanner.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
+            raise ValueError("Start is Out of Bounds!")
+        
         #creating a frontier to use the priority queue class to follow the sudo code
         mapFrontier = PriorityQueue()
         #place start position at the start of the point given
