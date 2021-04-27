@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import rospy
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Point, Quaternion
 from tf.transformations import euler_from_quaternion,quaternion_from_euler
@@ -32,6 +32,8 @@ class Lab2:
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
 
+        self.pathPublisher = rospy.Publisher('/path_planner/path', Path, queue_size=10)
+
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
     def executePath(self, msg):
@@ -53,16 +55,14 @@ class Lab2:
         #Request path Planniung Service 
         req = GetPlan()
         path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
-        #req.request.start = PSstart
-        # req.start = PSstart
-        # req.goal = msg
-        # req.tolerance = ToleranceVal
         resp = path_planner(PSstart,msg,ToleranceVal)
+
+        self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
-        msgWaypointList = resp.plan.poses
+        resp.plan.poses.pop(0)
 
-        for everyWaypoint in msgWaypointList:
+        for everyWaypoint in resp.plan.poses:
             print(everyWaypoint)
             self.go_to(everyWaypoint)
 
