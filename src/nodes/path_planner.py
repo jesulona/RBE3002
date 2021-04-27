@@ -126,26 +126,21 @@ class PathPlanner:
         for pathI in range(len(path)):
             yaw = 0
 
-            if pathI < len(path) -1:
-                currentPoint = pathI
-                nextPoint = pathI +1
-
+            if pathI < len(path) - 1:
                 #Calculate distance to final pose
-                currPoint = path[currentPoint]
-                nxtPoint = path[nextPoint]
+                currPoint = path[pathI]
+                nxtPoint = path[pathI + 1]
 
-                dX = nxtPoint[0]- currPoint[0]
-                dY = nxtPoint[1]- currPoint[1]
+                dX = nxtPoint[0] - currPoint[0]
+                dY = nxtPoint[1] - currPoint[1]
 
                 #Calculate initial turn angle 
                 angToDest = math.atan2(dY,dX)
-                print(angToDest)
-
                 #angleToTurnTo = self.
 
             
             #XYZ and QuatStuff
-            xyPos = PathPlanner.grid_to_world(mapdata,path[pathI][0],path[pathI][0])
+            xyPos = PathPlanner.grid_to_world(mapdata,path[pathI][0],path[pathI][1])
             quatArray = quaternion_from_euler(0,0,angToDest)
             quatObj = Quaternion(*quatArray)
 
@@ -308,7 +303,7 @@ class PathPlanner:
 
             ## Determine cspace for each layer of padding
             for i in range(padding):
-                print(i)
+                #print(i)
                 ## Go through each cell in the occupancy grid (range used to start on row/col 0)
                 for y in range(mapdata.info.height):
                     for x in range(mapdata.info.width):
@@ -412,7 +407,7 @@ class PathPlanner:
                 #listofCells.append(xyCoord) 
                 neighbourViz.cells.append(xyCoord)
                 
-                print(neighbourViz.cells)
+                #print(neighbourViz.cells)
                 #print("listofcells" + str(listofCells))
                 #Set cell data to the world coordinates of obstacles
                 neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
@@ -454,11 +449,10 @@ class PathPlanner:
 
         path.reverse()
         deepcopyofpath = deepcopy(path)
-        print(path)
+        #print(path)
 
         for everyLoc in path:
             xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
-            print("hello")
             pathCells.cells.append(xyCoordPath)
             pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
             self.pubPath.publish(pathCells)

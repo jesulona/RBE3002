@@ -108,7 +108,7 @@ class Lab3:
         startAng = self.pth
         AtT = angle - startAng
         reachedDest = False
-
+        print('rotating to face ' + str(angle))
         while(not reachedDest and not rospy.is_shutdown()):
             angCur = self.pth
             angLeft = angle - angCur
