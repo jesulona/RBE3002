@@ -63,7 +63,7 @@ class Lab3:
         resp.plan.poses.pop(0)
 
         for everyWaypoint in resp.plan.poses:
-            print(everyWaypoint)
+            #print(everyWaypoint)
             self.go_to(everyWaypoint)
 
     def send_speed(self, linear_speed, angular_speed):
@@ -100,33 +100,31 @@ class Lab3:
         initY  = self.py
         initYaw = self.omega
         THRESH = .07    #Tolerance for distance measurement [m]
-        kp = .000001    #kp for controller
+        kpOmega = .01    #kp for controller
+        kpDist = .5
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
         end = False     #flag for the robot motion
+
+        print('SPEEDING UP')
+        for x in range(1000):
+            omegaError = initYaw - self.omega
+            self.send_speed(linear_speed*(float(x)/1000),-omegaError * kpOmega)
+            start = False
+            run = True
+        
         
         while(self.calc_distance(initX, self.px, initY, self.py) < distance - THRESH):
-            #start sending velocity commands linearly
-            if start is True:
-                for x in range(500):
-                    print('SPEEDING UP')
-                    self.send_speed(linear_speed*(float(x)/500),0)
-                    rospy.sleep(.01)
-                    start = False
-                    run = True
-            #Run the robot at full speed
-            if run is True:
-                print('Running at speed')
-                omegaError = initYaw - self.omega       #Error for controller
-                errorInt = errorInt + omegaError        #Integral of error used for ki term
-                self.send_speed(linear_speed,-omegaError * kp)
-                rospy.sleep(.0)
-
+            print('Running at speed')
+            omegaError = initYaw - self.omega       #Error for controller
+            errorInt = errorInt + omegaError        #Integral of error used for ki term
+            self.send_speed(linear_speed,-omegaError * kpOmega)
+        
         #Since the robot is within the tolerance, brake
-        for u in range(550):
-            print('BRAKING')
-            self.send_speed(linear_speed*(float(550-u)/550),0)
-
+        print('BRAKING')
+        for u in range(1000):
+            self.send_speed(linear_speed*(float(500-u)/1000),0)
+        
         print('Move Completed!')
         self.send_speed(0,0)
 
@@ -198,7 +196,9 @@ class Lab3:
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
+            rospy.loginfo("Driving " + str(distToGoal) + ' To get to the next goal')
             self.drive(distToGoal, SPEED)
+            rospy.loginfo("Im at my goal!")
             rospy.sleep(.5)
             #3 Once at goal, rotate to desired orientation (rotate)
             quat_orig  = goal.orientation                            
