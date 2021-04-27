@@ -539,7 +539,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        return self.path_to_message(mapdata, path)
+        return self.path_to_message(mapdata, waypoint)
 
     
     
