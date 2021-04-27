@@ -167,7 +167,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Axes: true
         C-Space GridCells: true
         DepthCloud: true
@@ -181,6 +180,7 @@ Visualization Manager:
         RobotModel: true
         TF: true
         Value: true
+        path: true
         wave: true
       Zoom Factor: 1
     - Angle Tolerance: 0.10000000149011612
@@ -350,7 +350,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.015000551007688046
+      Angle: 0.03499944508075714
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -360,11 +360,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 47.417728424072266
+      Scale: 175.9163818359375
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 2.221534490585327
-      Y: -0.03324621170759201
+      X: 1.2505772113800049
+      Y: 0.053933288902044296
     Saved: ~
 Window Geometry:
   Camera:

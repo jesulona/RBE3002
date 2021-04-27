@@ -8,7 +8,6 @@ from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
-from nodes import bot
 
 
 class PathPlanner:
@@ -23,7 +22,7 @@ class PathPlanner:
         
         ## Create a new service called "plan_path" that accepts messages of
         ## type GetPlan and calls self.plan_path() when a message is received
-        self.serv = rospy.Service('plan_path', GetPlan, self.plan_path)
+        self.serv = rospy.Service('/plan_path', GetPlan, self.plan_path)
         
         ## Create a publisher for the C-space (the enlarged occupancy grid)
         ## The topic is "/path_planner/cspace", the message type is GridCells
@@ -127,19 +126,21 @@ class PathPlanner:
         for pathI in range(len(path)):
             yaw = 0
 
-            if pathI < len(path) -1:
-                currentPoint = pathI
-                nextPoint = pathI +1
-
+            if pathI < len(path) - 1:
                 #Calculate distance to final pose
-                dX = nextPoint[0] - currentPoint[0]
-                dY = nextPoint[1] - currentPoint[1]
+                currPoint = path[pathI]
+                nxtPoint = path[pathI + 1]
+
+                dX = nxtPoint[0] - currPoint[0]
+                dY = nxtPoint[1] - currPoint[1]
 
                 #Calculate initial turn angle 
                 angToDest = math.atan2(dY,dX)
+                #angleToTurnTo = self.
+
             
             #XYZ and QuatStuff
-            xyPos = self.grid_to_world(mapdata,everyPath[0],everyPath[1])
+            xyPos = PathPlanner.grid_to_world(mapdata,path[pathI][0],path[pathI][1])
             quatArray = quaternion_from_euler(0,0,angToDest)
             quatObj = Quaternion(*quatArray)
 
@@ -302,7 +303,7 @@ class PathPlanner:
 
             ## Determine cspace for each layer of padding
             for i in range(padding):
-                print(i)
+                #print(i)
                 ## Go through each cell in the occupancy grid (range used to start on row/col 0)
                 for y in range(mapdata.info.height):
                     for x in range(mapdata.info.width):
@@ -406,7 +407,7 @@ class PathPlanner:
                 #listofCells.append(xyCoord) 
                 neighbourViz.cells.append(xyCoord)
                 
-                print(neighbourViz.cells)
+                #print(neighbourViz.cells)
                 #print("listofcells" + str(listofCells))
                 #Set cell data to the world coordinates of obstacles
                 neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
@@ -448,11 +449,10 @@ class PathPlanner:
 
         path.reverse()
         deepcopyofpath = deepcopy(path)
-        print(path)
+        #print(path)
 
         for everyLoc in path:
             xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
-            print("hello")
             pathCells.cells.append(xyCoordPath)
             pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
             self.pubPath.publish(pathCells)
@@ -482,7 +482,7 @@ class PathPlanner:
         rospy.loginfo("Received path:" + str(path))
         pathMessage = Path()
         pathMessage.poses = self.path_to_poses(mapdata,path)
-        pathMessage.header = mapdata.header
+        pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
         return pathMessage
 
@@ -508,7 +508,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        return self.path_to_message(mapdata, waypoints)
+        return self.path_to_message(mapdata, path)
 
 
     
@@ -516,9 +516,9 @@ class PathPlanner:
         """
         Runs the node until Ctrl-C is pressed.
         """
-        mapdata = PathPlanner.request_map()
-        self.calc_cspace(mapdata,1)
-        self.a_star(mapdata,(1,1),(34,7))
+        # mapdata = PathPlanner.request_map()
+        # self.calc_cspace(mapdata,1)
+        # self.a_star(mapdata,(1,1),(34,7))
         rospy.spin()
 
         
