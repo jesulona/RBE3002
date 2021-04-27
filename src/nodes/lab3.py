@@ -5,7 +5,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-import path_planner
+import path_planner, numpy
 from nav_msgs.srv import GetPlan
 
 class Lab3:
@@ -138,7 +138,7 @@ class Lab3:
         quat_orig = msg.pose.orientation 
         quat_list = [quat_orig.x,quat_orig.y,quat_orig.z,quat_orig.w] 
         (roll,pitch,yaw) = euler_from_quaternion(quat_list)
-        destPth = yaw
+        destPth = yaw 
 
         #Record current pose
         xCur = self.px
@@ -154,9 +154,9 @@ class Lab3:
         DtD = math.sqrt(pow(dX,2) + pow(dY,2))
 
         #Execute plan
-        self.rotate(angToDest,0.75)
+        self.rotate(angToDest,0.5)
         self.drive(DtD,0.20)
-        self.rotate(destPth,0.75)
+        self.rotate(destPth,0.5)
 
 
 

@@ -139,6 +139,10 @@ class PathPlanner:
 
                 #Calculate initial turn angle 
                 angToDest = math.atan2(dY,dX)
+                print(angToDest)
+
+                #angleToTurnTo = self.
+
             
             #XYZ and QuatStuff
             xyPos = PathPlanner.grid_to_world(mapdata,path[pathI][0],path[pathI][0])
