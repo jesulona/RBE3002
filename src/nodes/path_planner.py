@@ -9,6 +9,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
 
+straightPath = [[0,1],[1,1],[2,1],[3,1]]
 
 class PathPlanner:
     
@@ -470,8 +471,38 @@ class PathPlanner:
         """
         ### EXTRA CREDIT
         rospy.loginfo("Optimizing path")
+        optimizedPath = deepcopy(path)
+        for location in range(len(path)-2):
 
-        
+            #if the path is moving at a positive x& y diagonal
+            if (path[location][0] == (path[location+1][0]-1) and path[location][0] == (path[location+2][0]-2)) and (path[location][1] == (path[location+1][1]-1) and path[location][1] == (path[location+2][1]-2)):
+                optimizedPath.remove(path[location+1])
+            #if the path is moving at a positive x & neg y diagonal
+            if (path[location][0] == (path[location+1][0]-1) and path[location][0] == (path[location+2][0]-2)) and (path[location][1] == (path[location+1][1]+1) and path[location][1] == (path[location+2][1]+2)):
+                optimizedPath.remove(path[location+1])
+            #if the path is moving at a neg x & pos y diagonal
+            if (path[location][0] == (path[location+1][0]+1) and path[location][0] == (path[location+2][0]+2)) and (path[location][1] == (path[location+1][1]-1) and path[location][1] == (path[location+2][1]-2)):
+                optimizedPath.remove(path[location+1])
+            #if the path is moving at a neg x & neg y diagonal
+            if (path[location][0] == (path[location+1][0]+1) and path[location][0]== (path[location+2][0]+2)) and (path[location][1] == (path[location+1][1]+1) and path[location][1] == (path[location+2][1]+2)):
+                optimizedPath.remove(path[location+1])
+
+            #if the path is moving at a positive x direction
+            if (path[location][0] == (path[location+1][0]-1) and path[location][0] == (path[location+2][0]-2)) and (path[location][1] == (path[location+1][1]) and path[location][1] == (path[location+2][1])):
+                optimizedPath.remove(path[location+1])
+            #if the path is moving at a neg x direction
+            if (path[location][0] == (path[location+1][0]+1) and path[location][0] == (path[location+2][0]+2)) and (path[location][1] == (path[location+1][1]) and path[location][1]== (path[location+2][1])):
+                optimizedPath.move(path[location+1])
+
+            #if the path is moving at a positive y direction
+            if (path[location][0] == (path[location+1][0]) and path[location][0] == (path[location+2][0])) and (path[location][1] == (path[location+1][1]-1) and path[location][1] == (path[location+2][1]-2)):
+                optimizedPath.remove(path[location+1])
+            #if the path is moving at a neg y direction
+            if (path[location][0] == (path[location+1][0]) and path[location][0] == (path[location+2][0])) and (path[location][1] == (path[location+1][1]+1) and path[location][1] == (path[location+2][1]+2)):
+                optimizedPath.remove(path[location+1])
+        print(path)
+        print(optimizedPath)
+        return optimizedPath
 
     def path_to_message(self, mapdata, path):
         """
@@ -508,9 +539,9 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        return self.path_to_message(mapdata, path)
+        return self.path_to_message(mapdata, waypoint)
 
-
+    
     
     def run(self):
         """
@@ -519,6 +550,7 @@ class PathPlanner:
         # mapdata = PathPlanner.request_map()
         # self.calc_cspace(mapdata,1)
         # self.a_star(mapdata,(1,1),(34,7))
+        newPath = PathPlanner.optimize_path(straightPath)
         rospy.spin()
 
         
