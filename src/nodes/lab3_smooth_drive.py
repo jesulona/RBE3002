@@ -9,7 +9,7 @@ from numpy import sqrt, pi, square
 from math import atan2
 from nav_msgs.srv import GetPlan
 
-class Lab2:
+class Lab3:
 
     def __init__(self):
         """
@@ -20,8 +20,8 @@ class Lab2:
         self.pth = 0    #Orientation (yaw) of the robot
         self.omega = 0  #Angular Velocity of the robot
 
-        #Initialize node, name it 'lab2'
-        rospy.init_node('lab2',anonymous= False) 
+        #Initialize node, name it 'lab3'
+        rospy.init_node('lab3',anonymous= False) 
 
         ### Tell ROS that this node publishes Twist messages on the '/cmd_vel' topic
         self.pub_move = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -253,4 +253,4 @@ class Lab2:
         rospy.spin()
 
 if __name__ == '__main__':
-    Lab2().run()
+    Lab3().run()
