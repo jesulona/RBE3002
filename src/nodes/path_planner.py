@@ -492,7 +492,7 @@ class PathPlanner:
                 optimizedPath.remove(path[location+1])
             #if the path is moving at a neg x direction
             if (path[location][0] == (path[location+1][0]+1) and path[location][0] == (path[location+2][0]+2)) and (path[location][1] == (path[location+1][1]) and path[location][1]== (path[location+2][1])):
-                optimizedPath.move(path[location+1])
+                optimizedPath.remove(path[location+1])
 
             #if the path is moving at a positive y direction
             if (path[location][0] == (path[location+1][0]) and path[location][0] == (path[location+2][0])) and (path[location][1] == (path[location+1][1]-1) and path[location][1] == (path[location+2][1]-2)):
@@ -539,7 +539,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        return self.path_to_message(mapdata, waypoint)
+        return self.path_to_message(mapdata, waypoints)
 
     
     
