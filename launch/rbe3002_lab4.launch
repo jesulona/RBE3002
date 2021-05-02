@@ -22,10 +22,10 @@
     <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch" />
   </group>
 
-  <node pkg="tf" type="static_transform_publisher" name="camera_tf" args="-1.95 -0.55 2.0 -1.58 0 -1.58 /odom /camera_link 100"/>
+  <!--node pkg="tf" type="static_transform_publisher" name="camera_tf" args="-1.95 -0.55 2.0 -1.58 0 -1.58 /odom /camera_link 100"/>-->
 
   <!--gmapping. We don't need mapserver if gmapping is running -->
-  <!--<include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" />-->
+  <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" />
 
   <!-- AMCL -->
   <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
