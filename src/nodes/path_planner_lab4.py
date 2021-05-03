@@ -578,29 +578,36 @@ class PathPlanner:
         calculate the frontier
         plan a path to the centroid of frontier
         """
-        ## Request the Gmap
-        ## In case of error, return an empty path
-        mapdata = PathPlanner.request_map()
-        if mapdata is None:
-            return Path()
+        everythingFound = False
+
+        if (occupanyGridIsComplete):
+            everythingFound = True
+
+        while not everythingFound:
+
+            ## Request the Gmap
+            ## In case of error, return an empty path
+            mapdata = PathPlanner.request_map()
+            if mapdata is None:
+                return Path()
     
-        ## find the froniter list
-        frontierList = PathPlanner.unknownNeighbour(mapdata)
+            ## find the froniter list
+            frontierList = PathPlanner.unknownNeighbour(mapdata)
 
-        ##Calculate centroid of frontier
-        centroid = PathPlanner.findCentroid(frontierList,mapdata)
+            ##Calculate centroid of frontier
+            centroid = PathPlanner.findCentroid(frontierList,mapdata)
 
-        ## Calculate the C-space and publish it
-        cspacedata = self.calc_cspace(mapdata, 1)
+            ## Calculate the C-space and publish it
+            cspacedata = self.calc_cspace(mapdata, 1)
 
-         ## Execute A*
-        start = PathPlanner.world_to_grid(mapdata, msg.start.pose.position)
-        goal  = PathPlanner.world_to_grid(mapdata, centroid???)
-        path  = self.a_star(cspacedata, start, goal)
-        ## Optimize waypoints
-        waypoints = PathPlanner.optimize_path(path)
-        ## Return a Path message
-        return self.path_to_message(mapdata, waypoints)
+            ## Execute A*
+            start = PathPlanner.world_to_grid(mapdata, msg.start.pose.position)
+            goal  = PathPlanner.world_to_grid(mapdata, centroid???)
+            path  = self.a_star(cspacedata, start, goal)
+            ## Optimize waypoints
+            waypoints = PathPlanner.optimize_path(path)
+            ## Return a Path message
+            return self.path_to_message(mapdata, waypoints)
 
     
     
