@@ -541,6 +541,64 @@ class PathPlanner:
         ## Return a Path message
         return self.path_to_message(mapdata, waypoints)
 
+    def unknownNeighbour(self,mapdata):
+        listOfFrontier = []
+        ## Go through each cell in the occupancy grid (range used to start on row/col 0)
+        for y in range(mapdata.info.height):
+            for x in range(mapdata.info.width):
+        ##check if neighbors have unknwons
+                neighbors = PathPlanner.neighbors_of_8(mapdata, x, y)           #Get all walkable cells that neighbor main cell
+                for each in neighbors:
+                    if is_cell_walkable(mapdata,x,y) and mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] = -1: 
+                        listOfFrontier.append(each)
+        return listOfFrontier
+
+
+    def findCentroid(self,listofCells,mapdata):
+        totalX =0
+        totalY =0
+        for everyCell in listofCells:
+            worldPoint = self.grid_to_world(mapdata, each[0], each[1]) 
+            xVal = worldPoint[0]
+            yVal = worldPoint[1]
+            totalX += xVal
+            totalY += yVal
+        averageX = totalX/len(listofCells)
+        averageY = totalY/len(listofCells)
+        centroidInWorld = (averageX,averageY)
+        return centroidInWorld
+
+    def getFrontier(self,msg):
+        """
+        getFrontier will get the mapdata
+        find cells with unknown neighbors
+        calculate the frontier
+        plan a path to the centroid of frontier
+        """
+        ## Request the Gmap
+        ## In case of error, return an empty path
+        mapdata = PathPlanner.request_map()
+        if mapdata is None:
+            return Path()
+    
+        ## find the froniter list
+        frontierList = PathPlanner.unknownNeighbour(mapdata)
+
+        ##Calculate centroid of frontier
+        centroid = PathPlanner.findCentroid(frontierList,mapdata)
+
+        ## Calculate the C-space and publish it
+        cspacedata = self.calc_cspace(mapdata, 1)
+
+         ## Execute A*
+        start = PathPlanner.world_to_grid(mapdata, msg.start.pose.position)
+        goal  = PathPlanner.world_to_grid(mapdata, centroid???)
+        path  = self.a_star(cspacedata, start, goal)
+        ## Optimize waypoints
+        waypoints = PathPlanner.optimize_path(path)
+        ## Return a Path message
+        return self.path_to_message(mapdata, waypoints)
+
     
     
     def run(self):
