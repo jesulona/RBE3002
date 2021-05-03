@@ -35,6 +35,9 @@ class PathPlanner:
         ## Choose a the topic names, the message type is GridCells
         self.pubAStar = rospy.Publisher('/path_planner/a_star_planning', GridCells, queue_size = 10)
         
+        ##Subscribe to get gridcells from Gmap
+        self.gMapSub = rospy.Subscriber('/map',GridCells,self.getFrontier)
+        
         ## Initialize the request counter
         self.requestCounter = 0
         
