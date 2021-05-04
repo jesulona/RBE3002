@@ -24,6 +24,7 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
+        self.pubDilutedFrontierLine = rospy.Publisher('dilFront', GridCells, queue_size=10)
 
         rospy.sleep(.5)
 
@@ -40,26 +41,74 @@ class Frontier:
         self.map = msg
     
 
+    def dilateAndErode(self, frontierGrid):
+        '''
+        Function dilates existing frontier cells and erodes them into thinner and connected versions
+        '''
+        #Make an empty list that is the same length as the current occupancy grid
+        #Iterate over the ORIGINAL MAP, if its a frontierLine, make it an obstacle
+        #once you have an empty map of only frontiers, dilute them using same method as cspace
+        padding = 2
+        dilutionMap = deepcopy(self.map)
+        dilutionMapData = [0] * len(dilutionMap.data)
+
+        dilWorldCoordinates = []
+        THRESH = 90
+        print(range(padding))
+        for i in range(padding):
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                        dilutionMapData[self.grid_to_index(x,y)] = 100
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+                        for each in self.neighbors_of_8(x,y):
+                            dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
+                            dilWorldCoordinates.append(self.grid_to_world(each[0],each[1]))
+            frontierGrid.data = deepcopy(dilutionMapData)
+        
+        dilFrontCoords = []
+        for i  in dilWorldCoordinates:
+            if i not in dilFrontCoords:
+                dilFrontCoords.append(i)  
+        
+        ## Create a GridCells message and publish it
+        ## This is used only for Rviz Visualization
+        msg = GridCells()                               #Create GridCells Object
+        msg.cell_height = self.map.info.resolution      #dims are equal to map resolution
+        msg.cell_width = self.map.info.resolution
+        msg.cells = dilFrontCoords                    #Set cell data to the world coordinates of obstacles
+        msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
+        self.pubDilutedFrontierLine.publish(msg)
+
+        dilutedFrontiers = OccupancyGrid()
+        dilutedFrontiers.header.frame_id = self.map.header.frame_id
+        dilutedFrontiers.info = self.map.info
+        dilutedFrontiers.data = dilutionMapData
+        self.c_space = dilutedFrontiers
+
+        ## Return the C-space
+        return dilutedFrontiers
+
+
+
 
     def getFrontier(self):
         THRESH = 50     #The threshold for something being considered an obstacle
         frontierWorldCoords = []   #initialize a list for storing frontier cell values
         #Get a copy of the current map with the calculated cspace for further editing
-        frontierMap = deepcopy(self.calc_cspace(None))
+        frontierMap = deepcopy(self.calc_cspace(None))  #Map + cspace
+  
+        frontierMapData = [0] * len(frontierMap.data)
 
-        frontierMap = list(frontierMap.data) #Make a list out of it so its changable
-        
         #Iterate over the stored map
         for y in range(self.map.info.height):
             for x in range(self.map.info.width):
                 #If any cells have an unknown neighbor
                 if self.isUnknown(x,y):
                     #See if the unkown cell has any walkable neigbors
-                    for each in self.neighbors_of_4(x,y):
-                        #If the cell is walkable
-                        if self.is_cell_walkable(each[0], each[1]):
-                            #frontierMap[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
-                            frontierWorldCoords.append(self.grid_to_world(each[0],each[1]))     #Add the coordinates of the unknown cell to the woorld coords grid
+                    for each in self.neighbors_of_8(x,y):
+                        frontierMapData[self.grid_to_index(each[0],each[1])] = 100                         #Set the cell to an obstacle (frontier line)
+                        frontierWorldCoords.append(self.grid_to_world(each[0],each[1]))     #Add the coordinates of the unknown cell to the woorld coords grid
         
         # Remove duplicate points from the world coordinate list
         frontCoords = []
@@ -75,6 +124,8 @@ class Frontier:
         self.pubFrontierLine.publish(msg)                   #Publish to topic for visualization in Rviz
         rospy.loginfo('test')
         
+        frontierMap.data = frontierMapData
+        print(type(frontierMap))
         return frontierMap  #Return for use in other functions
 
 
@@ -295,7 +346,8 @@ class Frontier:
         Runs the node until Ctrl-C is pressed.
         """
         print('Running frontier_cspace.py')
-        self.getFrontier()
+        #self.getFrontier()
+        self.dilateAndErode(self.getFrontier())
         print('getFrontier Ran')
         rospy.spin()
 
