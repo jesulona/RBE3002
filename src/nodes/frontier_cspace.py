@@ -53,25 +53,44 @@ class Frontier:
         for y in range(self.map.info.height):
             for x in range(self.map.info.width):
                 #If any cells have an unknown neighbor
-                if self.hasUnknownNeighbor(x,y):
+                if self.isUnknown(x,y):
                     #See if the unkown cell has any walkable neigbors
                     for each in self.neighbors_of_4(x,y):
                         #If the cell is walkable
                         if self.is_cell_walkable(each[0], each[1]):
-                            frontierMap[self.grid_to_index(x,y)] = 100              #Set the cell to an obstacle (frontier line)
-                            frontierWorldCoords.append(self.grid_to_world(x,y))     #Add the coordinates of the unknown cell to the woorld coords grid
-
+                            #frontierMap[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
+                            frontierWorldCoords.append(self.grid_to_world(each[0],each[1]))     #Add the coordinates of the unknown cell to the woorld coords grid
+        
+        # Remove duplicate points from the world coordinate list
+        frontCoords = []
+        for i  in frontierWorldCoords:
+            if i not in frontCoords:
+                frontCoords.append(i)    
+        
         msg = GridCells()                                   #Create GridCells Object
-        msg.cell_height = mapdata.info.resolution           #dims are equal to map resolution
-        msg.cell_width = mapdata.info.resolution
-        msg.cells = frontierWorldCoords                     #Set cell data to the world coordinates of frontier cells
+        msg.cell_height = self.map.info.resolution           #dims are equal to map resolution
+        msg.cell_width = self.map.info.resolution
+        msg.cells = frontCoords                     #Set cell data to the world coordinates of frontier cells
         msg.header.frame_id = self.map.header.frame_id      #Copy over frame id
         self.pubFrontierLine.publish(msg)                   #Publish to topic for visualization in Rviz
-
-        frontierMap.data = frontierMap  #Set the copy maps data to the data showing only frontiers
-
+        rospy.loginfo('test')
+        
         return frontierMap  #Return for use in other functions
 
+
+    
+    def isUnknown(self, x, y):
+        '''
+        Function determines if the cell has a probability of -1
+        :param x [int] [m] The x coordinate of the cell
+        :param y [int] [m] The y coordinate of the cell
+        :return boolean True if the cell is unkown
+        '''
+        if self.map.data[self.grid_to_index(x,y)] == -1 and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
+            return True
+        else:
+            return False
+    
 
 
     def grid_to_index(self, x, y):
@@ -125,6 +144,7 @@ class Frontier:
                         worldCoordinates.append(worldPoint)            #append to list in order
             
             ## Create a GridCells message and publish it
+            ## This is used only for Rviz Visualization
             msg = GridCells()                               #Create GridCells Object
             msg.cell_height = self.map.info.resolution      #dims are equal to map resolution
             msg.cell_width = self.map.info.resolution
@@ -261,14 +281,12 @@ class Frontier:
         xRange = range(0,xLim)
         yRange = range(0,yLim)
         
-        freeThreshold = 10
+        freeThreshold = 25
 
-        if(x in xRange and y in yRange):
-            index = self.grid_to_index(x,y)
-            if self.map.data[index] < freeThreshold:
-                return True
-        
-        return False
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):
+            return True
+        else:
+            return False
 
 
 

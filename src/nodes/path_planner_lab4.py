@@ -30,19 +30,8 @@ class PathPlanner:
 
     def test(self):
         cspace_data = rospy.ServiceProxy('cspace', GetMap)
-        print(cspace_data().map.data)
         #self.header.frame_id = cspace_data.header.frame_id
 
-    @staticmethod
-    def grid_to_index(mapdata, x, y):
-        """
-        Returns the index corresponding to the given (x,y) coordinates in the occupancy grid.
-        :param x [int] The cell X coordinate.
-        :param y [int] The cell Y coordinate.
-        :return  [int] The index.
-        """
-        index = y * mapdata.info.width + x
-        return index
        
 
 
