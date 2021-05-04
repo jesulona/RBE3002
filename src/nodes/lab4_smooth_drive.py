@@ -248,6 +248,7 @@ class Lab4:
 
     def run(self):
         print('Running')
+        self.go_to()
         rospy.spin()
 
 if __name__ == '__main__':
