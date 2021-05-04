@@ -106,27 +106,37 @@ class Frontier:
         listofCentroidCenters = []
         centroidNlist = []
 
-        for i in range(len(listofFrontierCoords)):
+        for i in range(len(listofFrontierCoords)-1):
             n = 0
-            print(listofFrontierCoords)
+            #print(listofFrontierCoords)
             listofNeigh = self.neighbors_of_8(listofFrontierCoords[i][0], listofFrontierCoords[i][1])
-            while i < len(listofFrontierCoords):
-                if listofFrontierCoords[i+1] in listofNeigh:
-                    centroidNlist.append([])
-                    centroidNlist[n].append(i)
-                n +=1
-    
+            #while i < len(listofFrontierCoords):
+            #print(listofNeigh)
+            #print(listofFrontierCoords)
+            #print('stuck')
+            if listofFrontierCoords[i+1] in listofNeigh:
+                print(listofFrontierCoords[i+1])
+                centroidNlist.append([])
+                centroidNlist[n].append(listofFrontierCoords[i])
+            n +=1
+        #print('made it!')
+        print(centroidNlist)
         for everyCluster in centroidNlist:
             totalX =0
             totalY =0
+            print(everyCluster)
             for everyCell in everyCluster:
-                worldPoint = self.grid_to_world(mapdata, everyCell[0], everyCell[1]) 
-                xVal = worldPoint[0]
-                yVal = worldPoint[1]
+                #print(everyCell)
+                #everyCell = self.index_
+                worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
+                #print(worldPoint)
+                xVal = worldPoint.x
+                yVal = worldPoint.y
                 totalX += xVal
                 totalY += yVal
-            averageX = totalX/len(everyCluster)
-            averageY = totalY/len(everyCluster)
+                length = len(everyCluster)
+            averageX = totalX/length
+            averageY = totalY/length
             centroidInWorld = (averageX,averageY)
             listofCentroidCenters.append(centroidInWorld)
 
