@@ -74,8 +74,8 @@ class Frontier:
         msg.header.frame_id = self.map.header.frame_id      #Copy over frame id
         self.pubFrontierLine.publish(msg)                   #Publish to topic for visualization in Rviz
         rospy.loginfo('test')
-        
-        return frontierMap  #Return for use in other functions
+        return frontCoords
+        #return frontierMap  #Return for use in other functions
 
 
     
@@ -90,6 +90,48 @@ class Frontier:
             return True
         else:
             return False
+
+    
+    def findCentroid(self,listofFrontierCells,mapdata):
+        """ Early Stage*******
+        findCentroid will take a listofCells and mapdata
+        and determine the centroid of the frontier
+        """
+        listofFrontierCoords = []
+        for everyfront in listofFrontierCells:
+
+            grid = self.world_to_grid(mapdata,everyfront)
+            listofFrontierCoords.append(grid)
+
+        listofCentroidCenters = []
+        centroidNlist = []
+
+        for i in range(len(listofFrontierCoords)):
+            n = 0
+            print(listofFrontierCoords)
+            listofNeigh = self.neighbors_of_8(listofFrontierCoords[i][0], listofFrontierCoords[i][1])
+            while i < len(listofFrontierCoords):
+                if listofFrontierCoords[i+1] in listofNeigh:
+                    centroidNlist.append([])
+                    centroidNlist[n].append(i)
+                n +=1
+    
+        for everyCluster in centroidNlist:
+            totalX =0
+            totalY =0
+            for everyCell in everyCluster:
+                worldPoint = self.grid_to_world(mapdata, everyCell[0], everyCell[1]) 
+                xVal = worldPoint[0]
+                yVal = worldPoint[1]
+                totalX += xVal
+                totalY += yVal
+            averageX = totalX/len(everyCluster)
+            averageY = totalY/len(everyCluster)
+            centroidInWorld = (averageX,averageY)
+            listofCentroidCenters.append(centroidInWorld)
+
+        return listofCentroidCenters
+
     
 
 
@@ -288,6 +330,24 @@ class Frontier:
         else:
             return False
 
+    def world_to_grid(self,mapdata, wp):
+        """
+        Transforms a world coordinate into a cell coordinate in the occupancy grid.
+        :param mapdata [OccupancyGrid] The map information.
+        :param wp      [Point]         The world coordinate.
+        :return        [(int,int)]     The cell position as a tuple.
+        """
+        try:
+            mapPos = mapdata.info.origin.position       #location of pos data in mapdata variable
+            mapRes = mapdata.info.resolution            #location of map resolution in variable 
+            xPos = int((wp.x - mapPos.x) / mapRes)      #Eq taken from lab document
+            yPos = int((wp.y - mapPos.y) / mapRes)
+            output = (xPos, yPos)   #Create coordinate for function output
+            return output
+        except Exception as e:
+            print(e)
+            print('Failed on world_to_grid()')
+
 
 
     def run(self):
@@ -295,10 +355,11 @@ class Frontier:
         Runs the node until Ctrl-C is pressed.
         """
         print('Running frontier_cspace.py')
-        self.getFrontier()
+        frontier = self.getFrontier()
+        listofC = self.findCentroid(frontier,self.map)
+        print(listofC)
         print('getFrontier Ran')
         rospy.spin()
-
 
 
 if __name__ == '__main__':
