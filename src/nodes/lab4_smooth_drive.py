@@ -32,6 +32,8 @@ class Lab4:
         ### Tell ROS that this node subscribes to Path messages on the '/path_planner/path' topic, and when a message is received, call self.execute_path
         rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
+        subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
+
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
     def executePath(self, msg):
@@ -248,8 +250,7 @@ class Lab4:
 
     def run(self):
         print('Running')
-        self.go_to()
         rospy.spin()
 
 if __name__ == '__main__':
-    lab4().run()
+    Lab4().run()

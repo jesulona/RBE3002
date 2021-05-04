@@ -24,7 +24,7 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
-
+        self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=1)
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
@@ -99,7 +99,6 @@ class Frontier:
         """
         listofFrontierCoords = []
         for everyfront in listofFrontierCells:
-
             grid = self.world_to_grid(mapdata,everyfront)
             listofFrontierCoords.append(grid)
 
@@ -110,26 +109,19 @@ class Frontier:
             n = 0
             #print(listofFrontierCoords)
             listofNeigh = self.neighbors_of_8(listofFrontierCoords[i][0], listofFrontierCoords[i][1])
-            #while i < len(listofFrontierCoords):
-            #print(listofNeigh)
-            #print(listofFrontierCoords)
-            #print('stuck')
+
             if listofFrontierCoords[i+1] in listofNeigh:
-                print(listofFrontierCoords[i+1])
                 centroidNlist.append([])
                 centroidNlist[n].append(listofFrontierCoords[i])
             n +=1
-        #print('made it!')
-        print(centroidNlist)
+        
+        print("I made clusters")
+    
         for everyCluster in centroidNlist:
             totalX =0
             totalY =0
-            print(everyCluster)
             for everyCell in everyCluster:
-                #print(everyCell)
-                #everyCell = self.index_
                 worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
-                #print(worldPoint)
                 xVal = worldPoint.x
                 yVal = worldPoint.y
                 totalX += xVal
@@ -139,6 +131,13 @@ class Frontier:
             averageY = totalY/length
             centroidInWorld = (averageX,averageY)
             listofCentroidCenters.append(centroidInWorld)
+
+        PoseStampedMessage = PoseStamped()
+        PoseStampedMessage.pose.position = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
+        #PoseStampedMessage.header = mapdata.header
+        #quat = quaternion_from_euler(0,0,self.pth)
+        #PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+        self.pubCentroid.publish(PoseStampedMessage)
 
         return listofCentroidCenters
 
@@ -366,9 +365,10 @@ class Frontier:
         """
         print('Running frontier_cspace.py')
         frontier = self.getFrontier()
-        listofC = self.findCentroid(frontier,self.map)
-        print(listofC)
         print('getFrontier Ran')
+        listofC = self.findCentroid(frontier,self.map)
+        print('listOfC Made')
+        print(listofC)
         rospy.spin()
 
 
