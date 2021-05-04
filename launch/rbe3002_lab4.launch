@@ -28,7 +28,7 @@
   <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" />
 
   <!-- AMCL -->
-  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+  <!--<include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>-->
   
   <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
   
