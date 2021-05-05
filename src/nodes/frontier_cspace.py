@@ -55,7 +55,8 @@ class Frontier:
         dilWorldCoordinates = []
 
         THRESH = 90
-            
+        
+        #Dilute the cells
         for i in range(padding):
             rospy.loginfo('padding row ' + str(i) + ' in the frontier line')
             for y in range(self.map.info.height):
@@ -65,24 +66,40 @@ class Frontier:
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
                         for each in self.neighbors_of_8(x,y):
                             dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
-                            dilWorldCoordinates.append(self.grid_to_world(each[0],each[1]))
+                            #dilWorldCoordinates.append(self.grid_to_world(each[0],each[1]))
             frontierGrid.data = deepcopy(dilutionMapData)
         
+        #Still add frontier line if padding is 0
         if padding == 0:
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
                     if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
         
+        ##Erosion
+        # Search through frontier dilution map
+        # if its on the edge
+            # On edge criteria
+            # One of the neighbors of 8 isnt 100
+            # 
+        # delete it from the occupancy grid
         '''
         for i in range(padding):
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
-                    if fronteirGrid.data[self.grid_to_index(x,y)] == 100:
-                        for each in self.neighbors_of_8(x,y)
-                            dilutionMapData[self.grid_to_index(each[0],each[1])] = 0
+                    if dilutionMapData[self.grid_to_index(x,y)] == 100:
+                        if onEdge(x,y):
+                            dilutionMapData[self.grid_to_index(x,y)] == 0
         '''
-        
+
+        #Add frontier cells to the world coordinates list
+        for i in range(padding):
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if dilutionMapData[self.grid_to_index(x,y)] >= THRESH:
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+
+        ## Check and remove any duplicates from the list of world coords
         dilFrontCoords = []
         for i  in dilWorldCoordinates:
             if i not in dilFrontCoords:
@@ -114,7 +131,6 @@ class Frontier:
         frontierWorldCoords = []   #initialize a list for storing frontier cell values
         #Get a copy of the current map with the calculated cspace for further editing
         frontierMap = deepcopy(self.calc_cspace(None))  #Map + cspace
-  
         frontierMapData = [0] * len(frontierMap.data)
 
         #Iterate over the stored map
@@ -154,7 +170,7 @@ class Frontier:
         :param y [int] [m] The y coordinate of the cell
         :return boolean True if the cell is unkown
         '''
-        if (self.map.data[self.grid_to_index(x,y)] is not -1 and self.map.data[self.grid_to_index(x,y)] < 10) and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
+        if (self.map.data[self.grid_to_index(x,y)] is not -1 and self.map.data[self.grid_to_index(x,y)] == 0) and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
             return True
         else:
             return False
@@ -189,20 +205,21 @@ class Frontier:
             rospy.loginfo("Calculating C-Space")
 
             ## Determine cspace for each layer of padding
+            mapCopy = self.map.data
             for i in range(padding):
                 #print(i)
                 ## Go through each cell in the occupancy grid (range used to start on row/col 0)
                 for y in range(self.map.info.height):
                     for x in range(self.map.info.width):
                         ## Inflate the obstacles where necessary
-                        if self.map.data[self.grid_to_index(x, y)] >= THRESH: 
+                        if mapCopy[self.grid_to_index(x, y)] >= THRESH: 
                             cspaceMap[self.grid_to_index(x, y)] = 100       #Set to 100 to make it 100% an obstacle
                             neighbors = self.neighbors_of_8(x, y)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
 
                 print('Found all the cspace for padding layer ' + str(i+1) + ' out of ' + str(padding))
-                self.map.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
+                mapCopy = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
             
             ## Convert cspace coordinates to world coordinates
             for y in range(self.map.info.height):
@@ -439,7 +456,7 @@ class Frontier:
         
         freeThreshold = 25
 
-        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold)):    # and (self.map.data[self.grid_to_index(x,y)] is not -1)
             return True
         else:
             return False
