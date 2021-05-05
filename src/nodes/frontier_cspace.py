@@ -46,7 +46,7 @@ class Frontier:
         #Make an empty list that is the same length as the current occupancy grid
         #Iterate over the ORIGINAL MAP, if its a frontierLine, make it an obstacle
         #once you have an empty map of only frontiers, dilute them using same method as cspace
-        padding = 1
+        padding = 0
         dilutionMap = deepcopy(self.map)
         '''
         for i in dilutionMap.data:
