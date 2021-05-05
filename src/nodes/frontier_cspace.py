@@ -66,7 +66,6 @@ class Frontier:
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
                         for each in self.neighbors_of_8(x,y):
                             dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
-                            #dilWorldCoordinates.append(self.grid_to_world(each[0],each[1]))
             frontierGrid.data = deepcopy(dilutionMapData)
         
         #Still add frontier line if padding is 0
@@ -78,10 +77,8 @@ class Frontier:
         
         ##Erosion
         # Search through frontier dilution map
-        # if its on the edge
-            # On edge criteria
-            # One of the neighbors of 8 isnt 100
-            # 
+        # if its on the edge (aka)
+            # One of the neighbors of 8 is empty
         # delete it from the occupancy grid
         '''
         for i in range(padding):
@@ -114,17 +111,14 @@ class Frontier:
         msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
         self.pubFrontierLine.publish(msg)
 
-        dilutedFrontiers = OccupancyGrid()
-        dilutedFrontiers.header.frame_id = self.map.header.frame_id
-        dilutedFrontiers.info = self.map.info
-        dilutedFrontiers.data = dilutionMapData
-        self.c_space = dilutedFrontiers
+        fixedFrontiers = OccupancyGrid()
+        fixedFrontiers.header.frame_id = self.map.header.frame_id
+        fixedFrontiers.info = self.map.info
+        fixedFrontiers.data = dilutionMapData
+        self.c_space = fixedFrontiers
 
-        ## Return the C-space
-        return dilutedFrontiers
-
-
-
+        ## Return the frontiers after they have been diluted and eroded
+        return fixedFrontiers
 
     def getFrontier(self):
         THRESH = 50     #The threshold for something being considered an obstacle
@@ -139,7 +133,7 @@ class Frontier:
                 #If any cells are known
                 if self.isKnown(x,y):
                     #See if the unkown cell has any unknwon neigbors
-                    if self.has_unknown_neighbors_of_8(x,y):
+                    if self.has_unknown_neighbors_of_4(x,y):
                         frontierMapData[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
                         frontierWorldCoords.append(self.grid_to_world(x,y))     #Add the coordinates of the unknown cell to the woorld coords grid
         
