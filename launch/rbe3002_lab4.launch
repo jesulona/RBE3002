@@ -25,12 +25,13 @@
   <!--node pkg="tf" type="static_transform_publisher" name="camera_tf" args="-1.95 -0.55 2.0 -1.58 0 -1.58 /odom /camera_link 100"/>-->
 
   <!--gmapping. We don't need mapserver if gmapping is running -->
-  <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" />
+  <!--NOTE: Set opeb_rviz config to false to use our config file -->
+  <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" >
+    <arg name='open_rviz' value='False'/>
+  </include>
 
   <!-- AMCL -->
   <!--<include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>-->
-  
-  <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
   
   <!--<env name="GAZEBO_MODEL_PATH" value="$(find RBE3002_template)/models:$(optenv GAZEBO_MODEL_PATH"/>
   <include file="$(find rbe3002-turtlebot)/launch/turtlebot3002_world.launch">
@@ -46,11 +47,12 @@
   </include>-->
 
   <!--Launch RViz with custom config file used for lab4-->
-  <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002_lab3)/launch/turtlebot3_gazebo_model_lab4.rviz"/>-->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002_lab3)/launch/turtlebot3_gazebo_model_lab4a.rviz"/>
 
   <!--Launch Path Planner Node for lab 4-->
   <node name='path_planner' pkg='rbe3002_lab3' type='path_planner_lab4.py'/>
 
   <!--TODO: Launch motion node and any other required ones-->
+  <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
 
 </launch>

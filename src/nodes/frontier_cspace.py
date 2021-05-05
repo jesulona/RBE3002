@@ -36,30 +36,106 @@ class Frontier:
         Set the map attribute to the current version of the occupancy grid
         :param msg [OccupandyGrid] The new map to be stored
         '''
-        print('updating the map')
         self.map = msg
     
 
+    def dilateAndErode(self, frontierGrid):
+        '''
+        Function dilates existing frontier cells and erodes them into thinner and connected versions
+        '''
+        #Make an empty list that is the same length as the current occupancy grid
+        #Iterate over the ORIGINAL MAP, if its a frontierLine, make it an obstacle
+        #once you have an empty map of only frontiers, dilute them using same method as cspace
+        padding = 0
+        dilutionMap = deepcopy(self.map)
+        '''
+        for i in dilutionMap.data:
+        '''
+        dilutionMapData = [0] * len(dilutionMap.data)
+        dilWorldCoordinates = []
+
+        THRESH = 90
+        
+        #Dilute the cells
+        for i in range(padding):
+            rospy.loginfo('padding row ' + str(i) + ' in the frontier line')
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                        dilutionMapData[self.grid_to_index(x,y)] = 100
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+                        for each in self.neighbors_of_8(x,y):
+                            dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
+            frontierGrid.data = deepcopy(dilutionMapData)
+        
+        #Still add frontier line if padding is 0
+        if padding == 0:
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+        
+        ##Erosion
+        # Search through frontier dilution map
+        # if its on the edge (aka)
+            # One of the neighbors of 8 is empty
+        # delete it from the occupancy grid
+        '''
+        for i in range(padding):
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if dilutionMapData[self.grid_to_index(x,y)] == 100:
+                        if onEdge(x,y):
+                            dilutionMapData[self.grid_to_index(x,y)] == 0
+        '''
+
+        #Add frontier cells to the world coordinates list
+        for i in range(padding):
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if dilutionMapData[self.grid_to_index(x,y)] >= THRESH:
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+
+        ## Check and remove any duplicates from the list of world coords
+        dilFrontCoords = []
+        for i  in dilWorldCoordinates:
+            if i not in dilFrontCoords:
+                dilFrontCoords.append(i)  
+        
+        ## Create a GridCells message and publish it
+        ## This is used only for Rviz Visualization
+        msg = GridCells()                               #Create GridCells Object
+        msg.cell_height = self.map.info.resolution      #dims are equal to map resolution
+        msg.cell_width = self.map.info.resolution
+        msg.cells = dilFrontCoords                    #Set cell data to the world coordinates of obstacles
+        msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
+        self.pubFrontierLine.publish(msg)
+
+        fixedFrontiers = OccupancyGrid()
+        fixedFrontiers.header.frame_id = self.map.header.frame_id
+        fixedFrontiers.info = self.map.info
+        fixedFrontiers.data = dilutionMapData
+        self.c_space = fixedFrontiers
+
+        ## Return the frontiers after they have been diluted and eroded
+        return fixedFrontiers
 
     def getFrontier(self):
         THRESH = 50     #The threshold for something being considered an obstacle
         frontierWorldCoords = []   #initialize a list for storing frontier cell values
         #Get a copy of the current map with the calculated cspace for further editing
-        frontierMap = deepcopy(self.calc_cspace(None))
+        frontierMap = deepcopy(self.calc_cspace(None))  #Map + cspace
+        frontierMapData = [0] * len(frontierMap.data)
 
-        frontierMap = list(frontierMap.data) #Make a list out of it so its changable
-        
         #Iterate over the stored map
         for y in range(self.map.info.height):
             for x in range(self.map.info.width):
-                #If any cells have an unknown neighbor
-                if self.isUnknown(x,y):
-                    #See if the unkown cell has any walkable neigbors
-                    for each in self.neighbors_of_4(x,y):
-                        #If the cell is walkable
-                        if self.is_cell_walkable(each[0], each[1]):
-                            #frontierMap[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
-                            frontierWorldCoords.append(self.grid_to_world(each[0],each[1]))     #Add the coordinates of the unknown cell to the woorld coords grid
+                #If any cells are known
+                if self.isKnown(x,y):
+                    #See if the unkown cell has any unknwon neigbors
+                    if self.has_unknown_neighbors_of_4(x,y):
+                        frontierMapData[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
+                        frontierWorldCoords.append(self.grid_to_world(x,y))     #Add the coordinates of the unknown cell to the woorld coords grid
         
         # Remove duplicate points from the world coordinate list
         frontCoords = []
@@ -74,19 +150,21 @@ class Frontier:
         msg.header.frame_id = self.map.header.frame_id      #Copy over frame id
         self.pubFrontierLine.publish(msg)                   #Publish to topic for visualization in Rviz
         rospy.loginfo('test')
-        return frontCoords
-        #return frontierMap  #Return for use in other functions
+        
+        frontierMap.data = frontierMapData
+        print(type(frontierMap.data))
+        return frontierMap  #Return for use in other functions
 
 
     
-    def isUnknown(self, x, y):
+    def isKnown(self, x, y):
         '''
-        Function determines if the cell has a probability of -1
+        Function determines if the cell is known, and is NOT an obstacle
         :param x [int] [m] The x coordinate of the cell
         :param y [int] [m] The y coordinate of the cell
         :return boolean True if the cell is unkown
         '''
-        if self.map.data[self.grid_to_index(x,y)] == -1 and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
+        if (self.map.data[self.grid_to_index(x,y)] is not -1 and self.map.data[self.grid_to_index(x,y)] == 0) and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
             return True
         else:
             return False
@@ -172,20 +250,21 @@ class Frontier:
             rospy.loginfo("Calculating C-Space")
 
             ## Determine cspace for each layer of padding
+            mapCopy = self.map.data
             for i in range(padding):
                 #print(i)
                 ## Go through each cell in the occupancy grid (range used to start on row/col 0)
                 for y in range(self.map.info.height):
                     for x in range(self.map.info.width):
                         ## Inflate the obstacles where necessary
-                        if self.map.data[self.grid_to_index(x, y)] >= THRESH: 
+                        if mapCopy[self.grid_to_index(x, y)] >= THRESH: 
                             cspaceMap[self.grid_to_index(x, y)] = 100       #Set to 100 to make it 100% an obstacle
                             neighbors = self.neighbors_of_8(x, y)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
 
                 print('Found all the cspace for padding layer ' + str(i+1) + ' out of ' + str(padding))
-                self.map.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
+                mapCopy = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
             
             ## Convert cspace coordinates to world coordinates
             for y in range(self.map.info.height):
@@ -267,6 +346,57 @@ class Frontier:
 
 
 
+    def has_unknown_neighbors_of_4(self, x, y):
+        """
+        Returns true if any neighbors of 4 are unknown
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [[(int,int)]]   A list of walkable 4-neighbors.
+        """
+        ### REQUIRED CREDIT
+        
+        #if the input values are greater than the mapdata, or less than 0, then
+        # an exception is thrown
+        if (x<0 or x> self.map.info.width-1 or y<0 or y>self.map.info.height-1):
+            raise ValueError("Out of Bounds!")
+
+        unAvailibleSpaces = []
+
+        #If x is not the value next to the boarder
+        if (x!=self.map.info.width-1):
+            #Check is cell is walkable
+            if (self.is_cell_not_walkable(x+1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x+1,y))
+
+        #If the x val is not the 0 boundary
+        if (x!=0):
+            #Check is cell is walkable
+            if(self.is_cell_not_walkable(x-1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x-1,y))
+        
+        #If y is not the value next to the boarder
+        if (y!=self.map.info.height-1):
+            #Check is cell is walkable
+            if (self.is_cell_not_walkable(x, y+1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x,y+1))
+
+        #If the y val is not the 0 boundary
+        if (y!=0):
+            #Check is cell is walkable
+            if(self.is_cell_not_walkable(x, y-1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x,y-1))
+
+        if len(unAvailibleSpaces) is not 0:
+            return True
+        else:
+            return False
+
+
     def neighbors_of_8(self, x, y):
         """
         Returns the walkable 8-neighbors cells of (x,y) in the occupancy grid.
@@ -297,6 +427,43 @@ class Frontier:
 
         return availibleSpaces
 
+
+    
+    def has_unknown_neighbors_of_8(self, x, y):
+        """
+        Returns true if any neighbors of 8 are unknown
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [boolean]
+        """
+        ### REQUIRED CREDIT
+
+        if self.has_unknown_neighbors_of_4(x, y):
+            return True
+        else:
+            notAvailibleSpaces = []
+            
+            if(x!=0 and y!=0):
+                if(self.is_cell_not_walkable(x-1,y-1)):
+                    notAvailibleSpaces.append((x-1,y-1))
+
+            if(x!=self.map.info.width-1 and y!=self.map.info.height-1):
+                if(self.is_cell_not_walkable(x+1,y+1)):
+                    notAvailibleSpaces.append((x+1,y+1))
+
+            if(x!=self.map.info.width-1 and y!=0):
+                if(self.is_cell_not_walkable(x+1,y-1)):
+                    notAvailibleSpaces.append((x+1,y-1))
+
+            if(x!=0 and y!=self.map.info.height-1):
+                if(self.is_cell_not_walkable(x-1,y+1)):
+                    notAvailibleSpaces.append((x-1,y+1))
+
+            if len(notAvailibleSpaces) is not 0:
+                return True
+            else:
+                return False
 
 
     def grid_to_world(self, x, y):
@@ -334,7 +501,32 @@ class Frontier:
         
         freeThreshold = 25
 
-        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold)):    # and (self.map.data[self.grid_to_index(x,y)] is not -1)
+            return True
+        else:
+            return False
+
+    
+
+    def is_cell_not_walkable(self, x, y):
+        """
+        A cell is walkable if all of these conditions are true:
+        1. It is within the boundaries of the grid;
+        2. It is free (not unknown, not occupied by an obstacle)
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [boolean]       True if the cell is walkable, False otherwise
+        """
+        xLim = self.map.info.width -1
+        yLim = self.map.info.height -1
+        
+        xRange = range(0,xLim)
+        yRange = range(0,yLim)
+        
+        freeThreshold = 25
+
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is -1)):
             return True
         else:
             return False
@@ -364,7 +556,8 @@ class Frontier:
         Runs the node until Ctrl-C is pressed.
         """
         print('Running frontier_cspace.py')
-        frontier = self.getFrontier()
+        #self.getFrontier()
+        self.dilateAndErode(self.getFrontier())
         print('getFrontier Ran')
         listofC = self.findCentroid(frontier,self.map)
         print('listOfC Made')
