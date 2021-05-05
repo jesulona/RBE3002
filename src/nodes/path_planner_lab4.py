@@ -132,7 +132,87 @@ class PathPlanner:
 
         return PoseStampedList
 
-               
+    def neighbors_of_4(mapdata, x, y):
+        """
+        Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [[(int,int)]]   A list of walkable 4-neighbors.
+        """
+        ### REQUIRED CREDIT
+        
+        #if the input values are greater than the mapdata, or less than 0, then
+        # an exception is thrown
+        if (x<0 or x> mapdata.info.width-1 or y<0 or y>mapdata.info.height-1):
+            raise ValueError("Out of Bounds!")
+
+        availibleSpaces = []
+
+        #If x is not the value next to the boarder
+        if (x!=mapdata.info.width-1):
+            #Check is cell is walkable
+            if (PathPlanner.is_cell_walkable(mapdata, x+1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append((x+1,y))
+
+        #If the x val is not the 0 boundary
+        if (x!=0):
+            #Check is cell is walkable
+            if(PathPlanner.is_cell_walkable(mapdata, x-1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append((x-1,y))
+        
+        #If y is not the value next to the boarder
+        if (y!=mapdata.info.height-1):
+            #Check is cell is walkable
+            if (PathPlanner.is_cell_walkable(mapdata, x, y+1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append((x,y+1))
+
+        #If the y val is not the 0 boundary
+        if (y!=0):
+            #Check is cell is walkable
+            if(PathPlanner.is_cell_walkable(mapdata, x, y-1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                availibleSpaces.append((x,y-1))
+
+        return availibleSpaces
+        
+    
+    
+    @staticmethod
+    def neighbors_of_8(mapdata, x, y):
+        """
+        Returns the walkable 8-neighbors cells of (x,y) in the occupancy grid.
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [[(int,int)]]   A list of walkable 8-neighbors.
+        """
+        ### REQUIRED CREDIT
+
+        availibleSpaces = PathPlanner.neighbors_of_4(mapdata, x, y)
+
+        
+        if(x!=0 and y!=0):
+            if(PathPlanner.is_cell_walkable(mapdata, x-1,y-1)):
+                availibleSpaces.append((x-1,y-1))
+
+        if(x!=mapdata.info.width-1 and y!=mapdata.info.height-1):
+            if(PathPlanner.is_cell_walkable(mapdata, x+1,y+1)):
+                availibleSpaces.append((x+1,y+1))
+
+        if(x!=mapdata.info.width-1 and y!=0):
+            if(PathPlanner.is_cell_walkable(mapdata, x+1,y-1)):
+                availibleSpaces.append((x+1,y-1))
+
+        if(x!=0 and y!=mapdata.info.height-1):
+            if(PathPlanner.is_cell_walkable(mapdata, x-1,y+1)):
+                availibleSpaces.append((x-1,y+1))
+
+        return availibleSpaces
+           
 
     def a_star(self, mapdata, start, goal):
         """

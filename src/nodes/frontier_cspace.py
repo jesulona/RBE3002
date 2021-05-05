@@ -4,7 +4,7 @@ import math
 import rospy
 from nav_msgs.srv import GetPlan, GetMap, GetMapResponse
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
-from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, PointStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
@@ -24,7 +24,8 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
-        self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=1)
+        self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=10)
+        self.pubCPoint = rospy.Publisher('/centroid/point',PointStamped,queue_size=10)
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
@@ -153,7 +154,8 @@ class Frontier:
         
         frontierMap.data = frontierMapData
         print(type(frontierMap.data))
-        return frontierMap  #Return for use in other functions
+        #return frontierMap  #Return for use in other functions
+        return frontCoords
 
 
     
@@ -211,11 +213,19 @@ class Frontier:
             listofCentroidCenters.append(centroidInWorld)
 
         PoseStampedMessage = PoseStamped()
-        PoseStampedMessage.pose.position = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
+        cPoint = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
+        PoseStampedMessage.pose.position = cPoint
         #PoseStampedMessage.header = mapdata.header
-        #quat = quaternion_from_euler(0,0,self.pth)
-        #PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+        quat = quaternion_from_euler(0,0,1)
+        PoseStampedMessage.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
         self.pubCentroid.publish(PoseStampedMessage)
+        print(PoseStampedMessage)
+        
+        PointStampedMessage = PointStamped()
+        PointStampedMessage.point.x = listofCentroidCenters[0][0]
+        PointStampedMessage.point.y = listofCentroidCenters[0][1]
+        PointStampedMessage.header.frame_id = mapdata.header.frame_id 
+        self.pubCPoint.publish(PointStampedMessage)
 
         return listofCentroidCenters
 
@@ -557,7 +567,8 @@ class Frontier:
         """
         print('Running frontier_cspace.py')
         #self.getFrontier()
-        self.dilateAndErode(self.getFrontier())
+        #self.dilateAndErode(self.getFrontier())
+        frontier = self.getFrontier()
         print('getFrontier Ran')
         listofC = self.findCentroid(frontier,self.map)
         print('listOfC Made')
