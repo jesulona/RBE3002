@@ -24,7 +24,6 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
-        self.pubDilutedFrontierLine = rospy.Publisher('dilFront', GridCells, queue_size=10)
 
         rospy.sleep(.5)
 
@@ -37,7 +36,6 @@ class Frontier:
         Set the map attribute to the current version of the occupancy grid
         :param msg [OccupandyGrid] The new map to be stored
         '''
-        print('updating the map')
         self.map = msg
     
 
@@ -48,14 +46,18 @@ class Frontier:
         #Make an empty list that is the same length as the current occupancy grid
         #Iterate over the ORIGINAL MAP, if its a frontierLine, make it an obstacle
         #once you have an empty map of only frontiers, dilute them using same method as cspace
-        padding = 2
+        padding = 1
         dilutionMap = deepcopy(self.map)
+        '''
+        for i in dilutionMap.data:
+        '''
         dilutionMapData = [0] * len(dilutionMap.data)
-
         dilWorldCoordinates = []
+
         THRESH = 90
-        print(range(padding))
+            
         for i in range(padding):
+            rospy.loginfo('padding row ' + str(i) + ' in the frontier line')
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
                     if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
@@ -65,6 +67,21 @@ class Frontier:
                             dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
                             dilWorldCoordinates.append(self.grid_to_world(each[0],each[1]))
             frontierGrid.data = deepcopy(dilutionMapData)
+        
+        if padding == 0:
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                        dilWorldCoordinates.append(self.grid_to_world(x,y))
+        
+        '''
+        for i in range(padding):
+            for y in range(self.map.info.height):
+                for x in range(self.map.info.width):
+                    if fronteirGrid.data[self.grid_to_index(x,y)] == 100:
+                        for each in self.neighbors_of_8(x,y)
+                            dilutionMapData[self.grid_to_index(each[0],each[1])] = 0
+        '''
         
         dilFrontCoords = []
         for i  in dilWorldCoordinates:
@@ -78,7 +95,7 @@ class Frontier:
         msg.cell_width = self.map.info.resolution
         msg.cells = dilFrontCoords                    #Set cell data to the world coordinates of obstacles
         msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
-        self.pubDilutedFrontierLine.publish(msg)
+        self.pubFrontierLine.publish(msg)
 
         dilutedFrontiers = OccupancyGrid()
         dilutedFrontiers.header.frame_id = self.map.header.frame_id
@@ -103,12 +120,12 @@ class Frontier:
         #Iterate over the stored map
         for y in range(self.map.info.height):
             for x in range(self.map.info.width):
-                #If any cells have an unknown neighbor
-                if self.isUnknown(x,y):
-                    #See if the unkown cell has any walkable neigbors
-                    for each in self.neighbors_of_8(x,y):
-                        frontierMapData[self.grid_to_index(each[0],each[1])] = 100                         #Set the cell to an obstacle (frontier line)
-                        frontierWorldCoords.append(self.grid_to_world(each[0],each[1]))     #Add the coordinates of the unknown cell to the woorld coords grid
+                #If any cells are known
+                if self.isKnown(x,y):
+                    #See if the unkown cell has any unknwon neigbors
+                    if self.has_unknown_neighbors_of_8(x,y):
+                        frontierMapData[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
+                        frontierWorldCoords.append(self.grid_to_world(x,y))     #Add the coordinates of the unknown cell to the woorld coords grid
         
         # Remove duplicate points from the world coordinate list
         frontCoords = []
@@ -125,19 +142,19 @@ class Frontier:
         rospy.loginfo('test')
         
         frontierMap.data = frontierMapData
-        print(type(frontierMap))
+        print(type(frontierMap.data))
         return frontierMap  #Return for use in other functions
 
 
     
-    def isUnknown(self, x, y):
+    def isKnown(self, x, y):
         '''
-        Function determines if the cell has a probability of -1
+        Function determines if the cell is known, and is NOT an obstacle
         :param x [int] [m] The x coordinate of the cell
         :param y [int] [m] The y coordinate of the cell
         :return boolean True if the cell is unkown
         '''
-        if self.map.data[self.grid_to_index(x,y)] == -1 and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
+        if (self.map.data[self.grid_to_index(x,y)] is not -1 and self.map.data[self.grid_to_index(x,y)] < 10) and 0 <= x < (self.map.info.width - 1) and 0 <= y < (self.map.info.height - 1):
             return True
         else:
             return False
@@ -267,6 +284,57 @@ class Frontier:
 
 
 
+    def has_unknown_neighbors_of_4(self, x, y):
+        """
+        Returns true if any neighbors of 4 are unknown
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [[(int,int)]]   A list of walkable 4-neighbors.
+        """
+        ### REQUIRED CREDIT
+        
+        #if the input values are greater than the mapdata, or less than 0, then
+        # an exception is thrown
+        if (x<0 or x> self.map.info.width-1 or y<0 or y>self.map.info.height-1):
+            raise ValueError("Out of Bounds!")
+
+        unAvailibleSpaces = []
+
+        #If x is not the value next to the boarder
+        if (x!=self.map.info.width-1):
+            #Check is cell is walkable
+            if (self.is_cell_not_walkable(x+1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x+1,y))
+
+        #If the x val is not the 0 boundary
+        if (x!=0):
+            #Check is cell is walkable
+            if(self.is_cell_not_walkable(x-1, y)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x-1,y))
+        
+        #If y is not the value next to the boarder
+        if (y!=self.map.info.height-1):
+            #Check is cell is walkable
+            if (self.is_cell_not_walkable(x, y+1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x,y+1))
+
+        #If the y val is not the 0 boundary
+        if (y!=0):
+            #Check is cell is walkable
+            if(self.is_cell_not_walkable(x, y-1)):
+                #If cell can be reached, add it to the list of avaible spaces
+                unAvailibleSpaces.append((x,y-1))
+
+        if len(unAvailibleSpaces) is not 0:
+            return True
+        else:
+            return False
+
+
     def neighbors_of_8(self, x, y):
         """
         Returns the walkable 8-neighbors cells of (x,y) in the occupancy grid.
@@ -297,6 +365,43 @@ class Frontier:
 
         return availibleSpaces
 
+
+    
+    def has_unknown_neighbors_of_8(self, x, y):
+        """
+        Returns true if any neighbors of 8 are unknown
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [boolean]
+        """
+        ### REQUIRED CREDIT
+
+        if self.has_unknown_neighbors_of_4(x, y):
+            return True
+        else:
+            notAvailibleSpaces = []
+            
+            if(x!=0 and y!=0):
+                if(self.is_cell_not_walkable(x-1,y-1)):
+                    notAvailibleSpaces.append((x-1,y-1))
+
+            if(x!=self.map.info.width-1 and y!=self.map.info.height-1):
+                if(self.is_cell_not_walkable(x+1,y+1)):
+                    notAvailibleSpaces.append((x+1,y+1))
+
+            if(x!=self.map.info.width-1 and y!=0):
+                if(self.is_cell_not_walkable(x+1,y-1)):
+                    notAvailibleSpaces.append((x+1,y-1))
+
+            if(x!=0 and y!=self.map.info.height-1):
+                if(self.is_cell_not_walkable(x-1,y+1)):
+                    notAvailibleSpaces.append((x-1,y+1))
+
+            if len(notAvailibleSpaces) is not 0:
+                return True
+            else:
+                return False
 
 
     def grid_to_world(self, x, y):
@@ -335,6 +440,31 @@ class Frontier:
         freeThreshold = 25
 
         if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):
+            return True
+        else:
+            return False
+
+    
+
+    def is_cell_not_walkable(self, x, y):
+        """
+        A cell is walkable if all of these conditions are true:
+        1. It is within the boundaries of the grid;
+        2. It is free (not unknown, not occupied by an obstacle)
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [boolean]       True if the cell is walkable, False otherwise
+        """
+        xLim = self.map.info.width -1
+        yLim = self.map.info.height -1
+        
+        xRange = range(0,xLim)
+        yRange = range(0,yLim)
+        
+        freeThreshold = 25
+
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is -1)):
             return True
         else:
             return False
