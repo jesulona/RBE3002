@@ -74,7 +74,7 @@ class Frontier:
                     if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
                         dilutionMapData[self.grid_to_index(x,y)] = 100
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
-                        for each in self.neighbors_of_8(x,y):
+                        for each in self.neighbors_of_8(x,y,dilutionMap):
                             dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
             frontierGrid.map.data = deepcopy(dilutionMapData)
 
@@ -196,12 +196,6 @@ class Frontier:
         centroidNlist = []
         listofFrontierCells = listofFrontierGrid.data
         n = 0
-        newlist = []
-        #print(listofFrontierCells)
-        for i in range(len(listofFrontierCells)):
-            if listofFrontierCells[i] >=50:
-                newlist.append(listofFrontierCells[i])
-        print (newlist)
 
         for y in range(listofFrontierGrid.info.height-1):
             
@@ -211,7 +205,7 @@ class Frontier:
                     #print(listofFrontierCoords)
                     print('help')
         
-                    listofNeigh = self.neighbors_of_8(listofFrontierCells[i][0], listofFrontierCells[i][1])
+                    listofNeigh = self.neighbors_of_8(x, y, mapdata)
 
                     if listofFrontierCells[i+1] in listofNeigh:
                         #centroidNlist.append([])
@@ -314,7 +308,7 @@ class Frontier:
                         ## Inflate the obstacles where necessary
                         if self.map.data[self.grid_to_index(x, y)] >= THRESH: 
                             cspaceMap[self.grid_to_index(x, y)] = 100       #Set to 100 to make it 100% an obstacle
-                            neighbors = self.neighbors_of_8(x, y)           #Get all walkable cells that neighbor main cell
+                            neighbors = self.neighbors_of_8(x, y, self.map)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
 
@@ -352,7 +346,7 @@ class Frontier:
 
 
 
-    def neighbors_of_4(self, x, y):
+    def neighbors_of_4(self, x, y, mapdata):
         """
         Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
         :param mapdata [OccupancyGrid] The map information.
@@ -364,36 +358,36 @@ class Frontier:
         
         #if the input values are greater than the mapdata, or less than 0, then
         # an exception is thrown
-        if (x<0 or x> self.map.info.width-1 or y<0 or y>self.map.info.height-1):
+        if (x<0 or x> mapdata.info.width-1 or y<0 or y>mapdata.info.height-1):
             raise ValueError("Out of Bounds!")
 
         availibleSpaces = []
 
         #If x is not the value next to the boarder
-        if (x!=self.map.info.width-1):
+        if (x!=mapdata.info.width-1):
             #Check is cell is walkable
-            if (self.is_cell_walkable(x+1, y)):
+            if (self.is_cell_walkable(x+1, y, mapdata)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x+1,y))
 
         #If the x val is not the 0 boundary
         if (x!=0):
             #Check is cell is walkable
-            if(self.is_cell_walkable(x-1, y)):
+            if(self.is_cell_walkable(x-1, y,mapdata)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x-1,y))
         
         #If y is not the value next to the boarder
-        if (y!=self.map.info.height-1):
+        if (y!=mapdata.info.height-1):
             #Check is cell is walkable
-            if (self.is_cell_walkable(x, y+1)):
+            if (self.is_cell_walkable(x, y+1,mapdata)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y+1))
 
         #If the y val is not the 0 boundary
         if (y!=0):
             #Check is cell is walkable
-            if(self.is_cell_walkable(x, y-1)):
+            if(self.is_cell_walkable(x, y-1,mapdata)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y-1))
 
@@ -452,7 +446,7 @@ class Frontier:
             return False
 
 
-    def neighbors_of_8(self, x, y):
+    def neighbors_of_8(self, x, y,mapdata):
         """
         Returns the walkable 8-neighbors cells of (x,y) in the occupancy grid.
         :param mapdata [OccupancyGrid] The map information.
@@ -462,22 +456,22 @@ class Frontier:
         """
         ### REQUIRED CREDIT
 
-        availibleSpaces = self.neighbors_of_4(x, y)
+        availibleSpaces = self.neighbors_of_4(x, y, mapdata)
 
         if(x!=0 and y!=0):
-            if(self.is_cell_walkable(x-1,y-1)):
+            if(self.is_cell_walkable(x-1,y-1,mapdata)):
                 availibleSpaces.append((x-1,y-1))
 
-        if(x!=self.map.info.width-1 and y!=self.map.info.height-1):
-            if(self.is_cell_walkable(x+1,y+1)):
+        if(x!=mapdata.info.width-1 and y!=mapdata.info.height-1):
+            if(self.is_cell_walkable(x+1,y+1,mapdata)):
                 availibleSpaces.append((x+1,y+1))
 
-        if(x!=self.map.info.width-1 and y!=0):
-            if(self.is_cell_walkable(x+1,y-1)):
+        if(x!=mapdata.info.width-1 and y!=0):
+            if(self.is_cell_walkable(x+1,y-1,mapdata)):
                 availibleSpaces.append((x+1,y-1))
 
-        if(x!=0 and y!=self.map.info.height-1):
-            if(self.is_cell_walkable(x-1,y+1)):
+        if(x!=0 and y!=mapdata.info.height-1):
+            if(self.is_cell_walkable(x-1,y+1,mapdata)):
                 availibleSpaces.append((x-1,y+1))
 
         return availibleSpaces
@@ -538,7 +532,7 @@ class Frontier:
 
 
 
-    def is_cell_walkable(self, x, y):
+    def is_cell_walkable(self, x, y, mapdata):
         """
         A cell is walkable if all of these conditions are true:
         1. It is within the boundaries of the grid;
@@ -556,7 +550,7 @@ class Frontier:
         
         freeThreshold = 25
 
-        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):    # 
+        if(x in xRange and y in yRange) and ((mapdata.data[self.grid_to_index(x,y)] <= freeThreshold) and (mapdata.data[self.grid_to_index(x,y)] is not -1)):    # 
             return True
         else:
             return False
@@ -614,13 +608,15 @@ class Frontier:
         #self.getFrontier()
         #self.dilateAndErode(self.getFrontier())
         frontier = self.dilateAndErode(self.getFrontier())
+
+        
               
-        '''
+        
         #print('getFrontier Ran')
-        #listofC = self.findCentroid(frontier,self.map)
-        '''
+        listofC = self.findCentroid(frontier,self.map)
+        
         #print('listOfC Made')
-        #print(listofC)
+        print(listofC)
         
         rospy.spin()
 
