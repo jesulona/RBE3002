@@ -134,7 +134,7 @@ class Frontier:
                 #If any cells are known
                 if self.isKnown(x,y):
                     #See if the unkown cell has any unknwon neigbors
-                    if self.has_unknown_neighbors_of_4(x,y):
+                    if self.has_unknown_neighbors_of_8(x,y):
                         frontierMapData[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
                         frontierWorldCoords.append(self.grid_to_world(x,y))     #Add the coordinates of the unknown cell to the woorld coords grid
         
@@ -252,7 +252,7 @@ class Frontier:
         :return        [OccupancyGrid] The C-Space.
         """
         try:
-            padding = 1
+            padding = 2
             THRESH = 50                     #Threshold for shading of a cell
             cspaceMap = list(self.map.data)     #Create a copy of existing map to expand obstacles with. Make list so its changeable
             worldCoordinates = []           #Initialize world coordinate list of obstacles
@@ -260,21 +260,20 @@ class Frontier:
             rospy.loginfo("Calculating C-Space")
 
             ## Determine cspace for each layer of padding
-            mapCopy = self.map.data
             for i in range(padding):
                 #print(i)
                 ## Go through each cell in the occupancy grid (range used to start on row/col 0)
                 for y in range(self.map.info.height):
                     for x in range(self.map.info.width):
                         ## Inflate the obstacles where necessary
-                        if mapCopy[self.grid_to_index(x, y)] >= THRESH: 
+                        if self.map.data[self.grid_to_index(x, y)] >= THRESH: 
                             cspaceMap[self.grid_to_index(x, y)] = 100       #Set to 100 to make it 100% an obstacle
                             neighbors = self.neighbors_of_8(x, y)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
 
                 print('Found all the cspace for padding layer ' + str(i+1) + ' out of ' + str(padding))
-                mapCopy = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
+                self.map.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
             
             ## Convert cspace coordinates to world coordinates
             for y in range(self.map.info.height):
@@ -511,7 +510,7 @@ class Frontier:
         
         freeThreshold = 25
 
-        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold)):    # and (self.map.data[self.grid_to_index(x,y)] is not -1)
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is not -1)):    # 
             return True
         else:
             return False
