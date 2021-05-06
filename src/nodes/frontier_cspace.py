@@ -214,10 +214,12 @@ class Frontier:
             largestYVal = 0
             for everyCell in everyCluster:
                 worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
+                #Keep track of the area
                 if worldPoint.x>largestXVal:
                     largestXVal = worldPoint.x                
                 if worldPoint.y>largestYVal:
-                    largestYVal = worldPoint.y     
+                    largestYVal = worldPoint.y 
+                    
                 xVal = worldPoint.x
                 yVal = worldPoint.y
                 totalX += xVal
@@ -228,6 +230,7 @@ class Frontier:
             centroidInWorld = (averageX,averageY)
             listofCentroidCenters.append(centroidInWorld)
 
+        
         PoseStampedMessage = PoseStamped()
         cPoint = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
         PoseStampedMessage.pose.position = cPoint
@@ -252,11 +255,10 @@ class Frontier:
         self.findCentroid(listofFrontierCells, mapdata)
 
         #Note size of each one
-        
-
+        #if doing frontier area by length, take length of cluster
 
         #note where robot is
-
+        
         #enter into frontier according to rank
 
 
