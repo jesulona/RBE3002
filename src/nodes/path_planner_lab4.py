@@ -29,7 +29,15 @@ class PathPlanner:
 
 
     def test(self):
-        cspace_data = rospy.ServiceProxy('cspace', GetMap)
+        '''
+        Function requests a service from the frontier_cspace.py node
+        Specify the service you want to run below
+        frontiers returns an occupancy grid containing the frontier lines and publishes BOTH the cspace and frontier lines to rviz
+        cspace returns an occupancy grid containing cspace and publishes to rviz
+        '''
+        cspace_data = rospy.ServiceProxy('frontiers', GetMap)
+        cspace_data()
+        rospy.loginfo('all done!')
         #self.header.frame_id = cspace_data.header.frame_id
 
        

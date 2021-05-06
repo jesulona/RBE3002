@@ -22,16 +22,26 @@ class Frontier:
 
         ## Publish GridCells to the cspace topic
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
+        
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
+        
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
+        
+        self.frontierService = rospy.Service('frontiers', GetMap, self.returnFront)
+        
         self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=10)
+        
         self.pubCPoint = rospy.Publisher('/centroid/point',PointStamped,queue_size=10)
+        
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
 
-        
-        
+    def returnFront(self,msg):
+        y = self.dilateAndErode(self.getFrontier())
+        print(type(y))
+        return y
+ 
     def updateMap(self, msg):
         '''
         Set the map attribute to the current version of the occupancy grid
@@ -56,19 +66,18 @@ class Frontier:
         dilWorldCoordinates = []
 
         THRESH = 90
-        
         #Dilute the cells
         for i in range(padding):
             rospy.loginfo('padding row ' + str(i) + ' in the frontier line')
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
-                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                    if frontierGrid.map.data[self.grid_to_index(x,y)] >= THRESH:
                         dilutionMapData[self.grid_to_index(x,y)] = 100
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
                         for each in self.neighbors_of_8(x,y):
                             dilutionMapData[self.grid_to_index(each[0],each[1])] = 100
-            frontierGrid.data = deepcopy(dilutionMapData)
-        
+            frontierGrid.map.data = deepcopy(dilutionMapData)
+
         #Still add frontier line if padding is 0
         if padding == 0:
             for y in range(self.map.info.height):
@@ -121,6 +130,8 @@ class Frontier:
         ## Return the frontiers after they have been diluted and eroded
         return fixedFrontiers
 
+        
+
     def getFrontier(self):
         THRESH = 50     #The threshold for something being considered an obstacle
         frontierWorldCoords = []   #initialize a list for storing frontier cell values
@@ -153,9 +164,8 @@ class Frontier:
         rospy.loginfo('test')
         
         frontierMap.data = frontierMapData
-        print(type(frontierMap.data))
-        #return frontierMap  #Return for use in other functions
-        return frontCoords
+        return frontierMap  #Return for use in other functions
+        #return frontCoords
 
 
     
@@ -564,14 +574,14 @@ class Frontier:
         """
         Runs the node until Ctrl-C is pressed.
         """
-        print('Running frontier_cspace.py')
+        #print('Running frontier_cspace.py')
         #self.getFrontier()
         #self.dilateAndErode(self.getFrontier())
-        frontier = self.getFrontier()
-        print('getFrontier Ran')
-        listofC = self.findCentroid(frontier,self.map)
-        print('listOfC Made')
-        print(listofC)
+        #frontier = self.getFrontier()
+        #print('getFrontier Ran')
+        #listofC = self.findCentroid(frontier,self.map)
+        #print('listOfC Made')
+        #print(listofC)
         rospy.spin()
 
 
