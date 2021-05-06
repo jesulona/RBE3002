@@ -185,7 +185,7 @@ class Frontier:
             return False
 
     
-    def findCentroid(self,listofFrontierGrid,mapdata):
+    def seperateFrontiers(self,listofFrontierGrid,mapdata):
         """ Early Stage*******
         findCentroid will take a listofCells and mapdata
         and determine the centroid of the frontier
@@ -199,16 +199,18 @@ class Frontier:
         bigListOfFrontiers = []
         
         #for each in frontier occupancy grid where val ==100 & does not belong in list
-        for each in listofFrontierGrid ==100:
-            
-            if not caseysFunction(bigListOfFrontiers,each):
-            # for each neighbor of 8 (x,y)
-                for i in has_unknown_neighbors_of_8(x,y):
-                #if self.grid_to_index(each) isn't present in frontier list
-                    if self.grid_to_index(each) not in bigListOfFrontiers[i]:
-                        bigListOfFrontiers[i].append(each)
-                    # add to the list(item)
-                    
+        for y in range(listofFrontierGrid.info.height):   
+            for x in range(listofFrontierGrid.info.width):
+                parent = self.grid_to_index(x,y)
+                if parent == 100 and not self.caseysFunction(listofFrontierCells, self.grid_to_index(x,y)):
+
+                # for each neighbor of 8 (x,y)
+                    for neighbor in has_unknown_neighbors_of_8(x,y):
+                    #if self.grid_to_index(each) isn't present in frontier list
+                        if self.grid_to_index(x,y) not in bigListOfFrontiers[]:
+                            bigListOfFrontiers[].append(self.grid_to_index(x,y))
+                        # add to the list(item)
+        '''
         for y in range(listofFrontierGrid.info.height-1):
             
             for x in range(listofFrontierGrid.info.width-1):
@@ -259,14 +261,15 @@ class Frontier:
         PointStampedMessage.point.y = listofCentroidCenters[0][1]
         PointStampedMessage.header.frame_id = mapdata.header.frame_id 
         self.pubCPoint.publish(PointStampedMessage)
-
+        '''
         return listofCentroidCenters
 
-    def caseysFunction(self,bigList, variable):
-        for sublist in bigList:
-            if variable in sublist:
+    def caseysFunction(lista, var):
+        for sublist in lista:
+            if var in sublist:
                 return True
-            else return False
+        return False
+            
 
     def centroidQueue(self, listofFrontierCells, mapdata):
         # return list of world coord for each frontier
