@@ -428,43 +428,6 @@ class PathPlanner:
     '''
 
 
-    def unknownNeighbour(self,mapdata):
-        """ Early Stage*******
-        unknownNeighbour will run through the map
-        and identify cells with unscanned neighbors 
-        and add those to a list represnting 
-        our frontier
-        """
-        listOfFrontier = []
-        ## Go through each cell in the occupancy grid (range used to start on row/col 0)
-        for y in range(mapdata.info.height):
-            for x in range(mapdata.info.width):
-        ##check if neighbors have unknwons
-                neighbors = PathPlanner.neighbors_of_8(mapdata, x, y)           #Get all walkable cells that neighbor main cell
-                for each in neighbors:
-                    if is_cell_walkable(mapdata,x,y) and mapdata.data[PathPlanner.grid_to_index(mapdata, x, y)] = -1: 
-                        listOfFrontier.append(each)
-        return listOfFrontier
-
-
-    def findCentroid(self,listofCells,mapdata):
-        """ Early Stage*******
-        findCentroid will take a listofCells and mapdata
-        and determine the centroid of the frontier
-        """
-        totalX =0
-        totalY =0
-        for everyCell in listofCells:
-            worldPoint = self.grid_to_world(mapdata, each[0], each[1]) 
-            xVal = worldPoint[0]
-            yVal = worldPoint[1]
-            totalX += xVal
-            totalY += yVal
-        averageX = totalX/len(listofCells)
-        averageY = totalY/len(listofCells)
-        centroidInWorld = (averageX,averageY)
-        return centroidInWorld
-
     def occupanyGridIsComplete(self,msg):
         """ Early Stage*******
         will do check if the occupancy Grid has been filled 

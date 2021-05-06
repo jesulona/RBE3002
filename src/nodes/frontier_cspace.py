@@ -256,10 +256,17 @@ class Frontier:
 
         #Note size of each one
         #if doing frontier area by length, take length of cluster
+        length = self.findCentroid.length
 
         #note where robot is
-        
+        PoseStampedMessage = PoseStamped()
+        PoseStampedMessage.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+
         #enter into frontier according to rank
+        #cost formula
+        #total cost = euclidean distance + length of frontier
+        #rank based on total cost?
+        #should there be some sort of factor that increases one weight over another
 
 
 
