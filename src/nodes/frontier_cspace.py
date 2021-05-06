@@ -71,7 +71,7 @@ class Frontier:
             rospy.loginfo('padding row ' + str(i) + ' in the frontier line')
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
-                    if frontierGrid.map.data[self.grid_to_index(x,y)] >= THRESH:
+                    if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
                         dilutionMapData[self.grid_to_index(x,y)] = 100
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
                         for each in self.neighbors_of_8(x,y):
@@ -83,6 +83,7 @@ class Frontier:
             for y in range(self.map.info.height):
                 for x in range(self.map.info.width):
                     if frontierGrid.data[self.grid_to_index(x,y)] >= THRESH:
+                        dilutionMapData[self.grid_to_index(x,y)] = 100
                         dilWorldCoordinates.append(self.grid_to_world(x,y))
         
         ##Erosion
@@ -125,6 +126,8 @@ class Frontier:
         fixedFrontiers.header.frame_id = self.map.header.frame_id
         fixedFrontiers.info = self.map.info
         fixedFrontiers.data = dilutionMapData
+        
+                        
         self.c_space = fixedFrontiers
 
         ## Return the frontiers after they have been diluted and eroded
@@ -611,17 +614,14 @@ class Frontier:
         #self.getFrontier()
         #self.dilateAndErode(self.getFrontier())
         frontier = self.dilateAndErode(self.getFrontier())
+              
+        '''
         #print('getFrontier Ran')
         #listofC = self.findCentroid(frontier,self.map)
-        newlist = []
-        for i in range(len(frontier.data)):
-            if frontier.data[i] >=50:
-                newlist.append(frontier.data[i])
-        print (newlist)
-
-
+        '''
         #print('listOfC Made')
         #print(listofC)
+        
         rospy.spin()
 
 
