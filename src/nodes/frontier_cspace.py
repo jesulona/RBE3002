@@ -196,7 +196,19 @@ class Frontier:
         centroidNlist = []
         listofFrontierCells = listofFrontierGrid.data
         n = 0
-
+        bigListOfFrontiers = []
+        
+        #for each in frontier occupancy grid where val ==100 & does not belong in list
+        for each in listofFrontierGrid ==100:
+            
+            if not caseysFunction(bigListOfFrontiers,each):
+            # for each neighbor of 8 (x,y)
+                for i in has_unknown_neighbors_of_8(x,y):
+                #if self.grid_to_index(each) isn't present in frontier list
+                    if self.grid_to_index(each) not in bigListOfFrontiers[i]:
+                        bigListOfFrontiers[i].append(each)
+                    # add to the list(item)
+                    
         for y in range(listofFrontierGrid.info.height-1):
             
             for x in range(listofFrontierGrid.info.width-1):
@@ -207,9 +219,9 @@ class Frontier:
         
                     listofNeigh = self.neighbors_of_8(x, y, mapdata)
 
-                    if listofFrontierCells[i+1] in listofNeigh:
+                    if (x+1,y+1) in listofNeigh:
                         #centroidNlist.append([])
-                        centroidNlist[n].append(listofFrontierCells[i])
+                        centroidNlist[n].append(listofFrontierCells[x+1,y+1])
                     n +=1
         
         print("I made clusters")
@@ -249,6 +261,12 @@ class Frontier:
         self.pubCPoint.publish(PointStampedMessage)
 
         return listofCentroidCenters
+
+    def caseysFunction(self,bigList, variable):
+        for sublist in bigList:
+            if variable in sublist:
+                return True
+            else return False
 
     def centroidQueue(self, listofFrontierCells, mapdata):
         # return list of world coord for each frontier
@@ -575,7 +593,7 @@ class Frontier:
         
         freeThreshold = 25
 
-        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] <= freeThreshold) and (self.map.data[self.grid_to_index(x,y)] is -1)):
+        if(x in xRange and y in yRange) and ((self.map.data[self.grid_to_index(x,y)] >= freeThreshold) or (self.map.data[self.grid_to_index(x,y)] is -1)):
             return True
         else:
             return False
