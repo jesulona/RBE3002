@@ -30,7 +30,12 @@ class Lab4:
         rospy.Subscriber('/odom', Odometry, self.update_odometry)
 
         ### Tell ROS that this node subscribes to Path messages on the '/path_planner/path' topic, and when a message is received, call self.execute_path
-        rospy.Subscriber('/path_planner/path', Path, self.executePath)
+        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
+
+        ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
+        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
+
+        subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
@@ -251,4 +256,4 @@ class Lab4:
         rospy.spin()
 
 if __name__ == '__main__':
-    lab4().run()
+    Lab4().run()

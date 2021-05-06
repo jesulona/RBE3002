@@ -4,7 +4,7 @@ import math
 import rospy
 from nav_msgs.srv import GetPlan, GetMap, GetMapResponse
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
-from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, PointStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
@@ -24,7 +24,8 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
-
+        self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=10)
+        self.pubCPoint = rospy.Publisher('/centroid/point',PointStamped,queue_size=10)
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
@@ -153,7 +154,8 @@ class Frontier:
         
         frontierMap.data = frontierMapData
         print(type(frontierMap.data))
-        return frontierMap  #Return for use in other functions
+        #return frontierMap  #Return for use in other functions
+        return frontCoords
 
 
     
@@ -168,6 +170,65 @@ class Frontier:
             return True
         else:
             return False
+
+    
+    def findCentroid(self,listofFrontierCells,mapdata):
+        """ Early Stage*******
+        findCentroid will take a listofCells and mapdata
+        and determine the centroid of the frontier
+        """
+        listofFrontierCoords = []
+        for everyfront in listofFrontierCells:
+            grid = self.world_to_grid(mapdata,everyfront)
+            listofFrontierCoords.append(grid)
+
+        listofCentroidCenters = []
+        centroidNlist = []
+
+        for i in range(len(listofFrontierCoords)-1):
+            n = 0
+            #print(listofFrontierCoords)
+            listofNeigh = self.neighbors_of_8(listofFrontierCoords[i][0], listofFrontierCoords[i][1])
+
+            if listofFrontierCoords[i+1] in listofNeigh:
+                centroidNlist.append([])
+                centroidNlist[n].append(listofFrontierCoords[i])
+            n +=1
+        
+        print("I made clusters")
+    
+        for everyCluster in centroidNlist:
+            totalX =0
+            totalY =0
+            for everyCell in everyCluster:
+                worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
+                xVal = worldPoint.x
+                yVal = worldPoint.y
+                totalX += xVal
+                totalY += yVal
+                length = len(everyCluster)
+            averageX = totalX/length
+            averageY = totalY/length
+            centroidInWorld = (averageX,averageY)
+            listofCentroidCenters.append(centroidInWorld)
+
+        PoseStampedMessage = PoseStamped()
+        cPoint = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
+        PoseStampedMessage.pose.position = cPoint
+        #PoseStampedMessage.header = mapdata.header
+        quat = quaternion_from_euler(0,0,1)
+        PoseStampedMessage.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+        self.pubCentroid.publish(PoseStampedMessage)
+        print(PoseStampedMessage)
+        
+        PointStampedMessage = PointStamped()
+        PointStampedMessage.point.x = listofCentroidCenters[0][0]
+        PointStampedMessage.point.y = listofCentroidCenters[0][1]
+        PointStampedMessage.header.frame_id = mapdata.header.frame_id 
+        self.pubCPoint.publish(PointStampedMessage)
+
+        return listofCentroidCenters
+
     
 
 
@@ -479,6 +540,24 @@ class Frontier:
         else:
             return False
 
+    def world_to_grid(self,mapdata, wp):
+        """
+        Transforms a world coordinate into a cell coordinate in the occupancy grid.
+        :param mapdata [OccupancyGrid] The map information.
+        :param wp      [Point]         The world coordinate.
+        :return        [(int,int)]     The cell position as a tuple.
+        """
+        try:
+            mapPos = mapdata.info.origin.position       #location of pos data in mapdata variable
+            mapRes = mapdata.info.resolution            #location of map resolution in variable 
+            xPos = int((wp.x - mapPos.x) / mapRes)      #Eq taken from lab document
+            yPos = int((wp.y - mapPos.y) / mapRes)
+            output = (xPos, yPos)   #Create coordinate for function output
+            return output
+        except Exception as e:
+            print(e)
+            print('Failed on world_to_grid()')
+
 
 
     def run(self):
@@ -487,10 +566,13 @@ class Frontier:
         """
         print('Running frontier_cspace.py')
         #self.getFrontier()
-        self.dilateAndErode(self.getFrontier())
+        #self.dilateAndErode(self.getFrontier())
+        frontier = self.getFrontier()
         print('getFrontier Ran')
+        listofC = self.findCentroid(frontier,self.map)
+        print('listOfC Made')
+        print(listofC)
         rospy.spin()
-
 
 
 if __name__ == '__main__':
