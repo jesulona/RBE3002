@@ -182,43 +182,48 @@ class Frontier:
             return False
 
     
-    def findCentroid(self,listofFrontierCells,mapdata):
+    def findCentroid(self,listofFrontierGrid,mapdata):
         """ Early Stage*******
         findCentroid will take a listofCells and mapdata
         and determine the centroid of the frontier
         """
-        listofFrontierCoords = []
-        for everyfront in listofFrontierCells:
-            grid = self.world_to_grid(mapdata,everyfront)
-            listofFrontierCoords.append(grid)
+    
 
         listofCentroidCenters = []
         centroidNlist = []
+        listofFrontierCells = listofFrontierGrid.data
+        n = 0
+        newlist = []
+        #print(listofFrontierCells)
+        for i in range(len(listofFrontierCells)):
+            if listofFrontierCells[i] >=50:
+                newlist.append(listofFrontierCells[i])
+        print (newlist)
 
-        for i in range(len(listofFrontierCoords)-1):
-            n = 0
-            #print(listofFrontierCoords)
-            listofNeigh = self.neighbors_of_8(listofFrontierCoords[i][0], listofFrontierCoords[i][1])
+        for y in range(listofFrontierGrid.info.height-1):
+            
+            for x in range(listofFrontierGrid.info.width-1):
+                if listofFrontierCells[self.grid_to_index(x,y)] >= 50:
+                    
+                    #print(listofFrontierCoords)
+                    print('help')
+        
+                    listofNeigh = self.neighbors_of_8(listofFrontierCells[i][0], listofFrontierCells[i][1])
 
-            if listofFrontierCoords[i+1] in listofNeigh:
-                centroidNlist.append([])
-                centroidNlist[n].append(listofFrontierCoords[i])
-            n +=1
+                    if listofFrontierCells[i+1] in listofNeigh:
+                        #centroidNlist.append([])
+                        centroidNlist[n].append(listofFrontierCells[i])
+                    n +=1
         
         print("I made clusters")
     
         for everyCluster in centroidNlist:
             totalX =0
             totalY =0
-            largestXVal = 0
-            largestYVal = 0
+
             for everyCell in everyCluster:
                 worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
-                #Keep track of the area
-                if worldPoint.x>largestXVal:
-                    largestXVal = worldPoint.x                
-                if worldPoint.y>largestYVal:
-                    largestYVal = worldPoint.y 
+
                     
                 xVal = worldPoint.x
                 yVal = worldPoint.y
@@ -605,9 +610,16 @@ class Frontier:
         #print('Running frontier_cspace.py')
         #self.getFrontier()
         #self.dilateAndErode(self.getFrontier())
-        #frontier = self.getFrontier()
+        frontier = self.dilateAndErode(self.getFrontier())
         #print('getFrontier Ran')
         #listofC = self.findCentroid(frontier,self.map)
+        newlist = []
+        for i in range(len(frontier.data)):
+            if frontier.data[i] >=50:
+                newlist.append(frontier.data[i])
+        print (newlist)
+
+
         #print('listOfC Made')
         #print(listofC)
         rospy.spin()
