@@ -210,8 +210,14 @@ class Frontier:
         for everyCluster in centroidNlist:
             totalX =0
             totalY =0
+            largestXVal = 0
+            largestYVal = 0
             for everyCell in everyCluster:
                 worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
+                if worldPoint.x>largestXVal:
+                    largestXVal = worldPoint.x                
+                if worldPoint.y>largestYVal:
+                    largestYVal = worldPoint.y     
                 xVal = worldPoint.x
                 yVal = worldPoint.y
                 totalX += xVal
@@ -239,7 +245,20 @@ class Frontier:
 
         return listofCentroidCenters
 
-    
+    def centroidQueue(self, listofFrontierCells, mapdata):
+        # return list of world coord for each frontier
+
+        #calc Centriod within list
+        self.findCentroid(listofFrontierCells, mapdata)
+
+        #Note size of each one
+        
+
+
+        #note where robot is
+
+        #enter into frontier according to rank
+
 
 
     def grid_to_index(self, x, y):
