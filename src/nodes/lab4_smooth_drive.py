@@ -39,6 +39,31 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
+
+    def phaseOne(self):
+        '''
+        Function automatically searches the map until its full
+        '''
+        #Call the frontier service
+        #Analyze the frontier
+        #if frontiers exist, path plan to one
+
+        pathPlan = GetPlan()
+        print(test)
+        currPose = PoseStamped()
+        #Set data using update_odom()
+        goalPose = PoseStamped()
+        #Set data from the chosen centroid
+
+        self.plan_path(GetPlan)
+
+    def phaseTwo(self):
+        #idk what well do here
+
+    def pickCentroid(self,msg):
+        print(len(msg.cells))
+        print(msg.cells[0])
+
     def executePath(self, msg):
         """
         Takes in a Path message as the goal

@@ -8,6 +8,10 @@ from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, PointStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
+from rbe3002_lab3.srv import frontierList, frontierListResponse, frontierListRequest
+
+
+
 
 class Frontier:
      
@@ -23,7 +27,7 @@ class Frontier:
         self.pubCPoint = rospy.Publisher('/centroid/point',GridCells,queue_size=10)
         
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
-        self.frontierService = rospy.Service('getFrontiers', GetMap, self.returnCentroids)
+        self.frontierService = rospy.Service('getFrontiers', frontierList, self.returnCentroids)
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
@@ -37,7 +41,7 @@ class Frontier:
         dilatedFrontiers = self.dilateAndErode(frontiers)
         frontierGroups = self.splitFrontiers(dilatedFrontiers)
         centroidList = self.getCentroids(frontierGroups)
-
+        centroidList = frontierListResponse(centroidList)
         return centroidList
 
 
@@ -236,8 +240,9 @@ class Frontier:
             centCells.cells.append(point)
 
         self.pubCPoint.publish(centCells)
-
-        return centCells
+        print(type(centCells))
+        print(type(centCells.cells[1]))
+        return centCells.cells
                 
 
         '''
@@ -648,7 +653,7 @@ class Frontier:
 
 
     def run(self):
-        self.returnCentroids(None)    
+        #self.returnCentroids(None)    
         rospy.spin()    #Required for ROS
 
 
