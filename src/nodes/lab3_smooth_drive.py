@@ -30,9 +30,9 @@ class Lab3:
         rospy.Subscriber('/odom', Odometry, self.update_odometry)
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
+        #rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
 
-        self.pathPublisher = rospy.Publisher('/path_planner/path', Path, queue_size=10)
+        rospy.Subscriber('/path_planner/path', Path, queue_size=10)
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 

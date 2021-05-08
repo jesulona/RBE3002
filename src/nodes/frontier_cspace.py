@@ -20,20 +20,25 @@ class Frontier:
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
         self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=10)
-        self.pubCPoint = rospy.Publisher('/centroid/point',PointStamped,queue_size=10)
+        self.pubCPoint = rospy.Publisher('/centroid/point',GridCells,queue_size=10)
         
         self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
-        self.frontierService = rospy.Service('frontiers', GetMap, self.returnFrontier)
+        self.frontierService = rospy.Service('getFrontiers', GetMap, self.returnCentroids)
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
 
 
-    def returnFrontier(self,msg):
+    def returnCentroids(self,msg):
         '''
         Used in Service Call
         '''
-        return self.dilateAndErode(self.getFrontier())
+        frontiers = self.getFrontier()
+        dilatedFrontiers = self.dilateAndErode(frontiers)
+        frontierGroups = self.splitFrontiers(dilatedFrontiers)
+        centroidList = self.getCentroids(frontierGroups)
+
+        return centroidList
 
 
     def updateMap(self, msg):
@@ -121,7 +126,7 @@ class Frontier:
         for y in range(self.map.info.height):
             for x in range(self.map.info.width):
                 #If any cells are known
-                if self.is_cell_walkable(x,y,self.map):
+                if self.is_cell_walkable(x,y,self.c_space):
                     #See if the unkown cell has any unknwon neigbors
                     if self.has_unknown_neighbors_of_8(x,y):
                         frontierMapData[self.grid_to_index(x,y)] = 100                         #Set the cell to an obstacle (frontier line)
@@ -203,24 +208,36 @@ class Frontier:
         return frontierGroups
 
     def getCentroids(self, list):
-        PointStampedMessage = PointStamped()
-        cents = []
+        '''
+        Function find the centroids in a list of frontiers
+        :param  list [list<list<int>>] A list of frontiers according to their index
+        :return list [list<Point>]     A list of centroids in the world frame
+        '''
+        centCells = GridCells()
+        centCells.cell_width = self.map.info.resolution
+        centCells.cell_height = self.map.info.resolution
+        centCells.header.frame_id = self.map.header.frame_id
+        centList = []
         for each in list:
             xSum = 0
             ySum = 0
             for i in each:
                 cell = self.index_to_grid(i, self.map)
-                xSum = xSum + cell[0]
-                ySum = ySum + cell[1]
+                #worldCoord = self.grid_to_world(cell[0],cell[1])
+                xSum = xSum + cell[0] #worldCoord.x
+                ySum = ySum + cell[1] #worldCoord.y
             xCentroid = xSum/len(each)
             yCentroid = ySum/len(each)
             worldCentroid = self.grid_to_world(xCentroid, yCentroid)
 
-            PointStampedMessage.point.x = worldCentroid.x
-            PointStampedMessage.point.y = worldCentroid.y
-            PointStampedMessage.header.frame_id = self.map.header.frame_id 
-            self.pubCPoint.publish(PointStampedMessage)
-        print(cents)
+            point = Point()
+            point.x = worldCentroid.x #xCentroid
+            point.y = worldCentroid.y #yCentroid
+            centCells.cells.append(point)
+
+        self.pubCPoint.publish(centCells)
+
+        return centCells
                 
 
         '''
@@ -357,6 +374,7 @@ class Frontier:
                             neighbors = self.neighbors_of_8(x, y, self.map)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
+                #cspaceMap = tuple(cspaceMap)
                 self.map.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
             
             ## Convert cspace coordinates to world coordinates (to avoid duplicates)
@@ -379,6 +397,7 @@ class Frontier:
             self.c_space = occGridCSpace
 
             ## Return the C-space
+            rospy.sleep(.25)
             return occGridCSpace
         except Exception as e:
             print('failed on calc_cspace')
@@ -580,6 +599,7 @@ class Frontier:
         return xyCoord
 
 
+
     def is_cell_walkable(self, x, y, mapdata):
         """
         Function returns true if a cell is within the boundary, not unknown, and not an obstacle
@@ -628,13 +648,7 @@ class Frontier:
 
 
     def run(self):
-        frontier = self.dilateAndErode(self.getFrontier())
-
-        listofC = self.splitFrontiers(frontier)
-
-        self.getCentroids(listofC)
-    
-        
+        self.returnCentroids(None)    
         rospy.spin()    #Required for ROS
 
 

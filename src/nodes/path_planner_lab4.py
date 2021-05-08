@@ -8,6 +8,7 @@ from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
+from nav_msgs.msg import Odometry
 
 class PathPlanner:
     
@@ -15,17 +16,62 @@ class PathPlanner:
         """
         Class constructor
         """
-        ### REQUIRED CREDIT
-        ## Initialize the node and call it "path_planner"
         rospy.init_node("path_planner", anonymous = False)
 
+        rospy.Subscriber('/odom', Odometry, self.update_odometry)           #Keep track of robots current position                       
+        self.serv = rospy.Service('/plan_path', GetPlan, self.plan_path)    #Service used for planning a path (gets start and end pose passed in)
 
-        self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)
+        self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)     #Used to publish a path when complete
+        self.centroidOptions = rospy.Subscriber('/centroid/point',GridCells,self.pickCentroid)      #Used to recieve centroid options
+        
         ## Sleep to allow roscore to do some housekeeping
         rospy.sleep(1.0)
-        rospy.loginfo("Path planner node ready")
 
-        self.test()
+        self.phaseOne() #Do Phase one of the lab automatically
+
+    def phaseOne(self):
+        '''
+        Function automatically searches the map until its full
+        '''
+        #Call the frontier service
+        #Analyze the frontier
+        #if frontiers exist, path plan to one
+
+        pathPlan = GetPlan()
+        print(test)
+        currPose = PoseStamped()
+        #Set data using update_odom()
+        goalPose = PoseStamped()
+        #Set data from the chosen centroid
+
+        #self.plan_path(GetPlan)
+
+    def phaseTwo(self):
+        #idk what well do here
+
+
+
+    def update_odometry(self, msg):
+        """
+        Updates the current pose of the robot.
+        This method is a callback bound to a Subscriber.
+        :param msg [Odometry] The current odometry information.
+        """
+        #Set the x and y positions of the robot
+        self.omega = msg.twist.twist.angular.z
+        self.px  = msg.pose.pose.position.x
+        self.py  = msg.pose.pose.position.y
+        #Set the robots orientation as a quaternion and create a list with the variables
+        quat_orig  = msg.pose.pose.orientation                              
+        quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]  
+        #Convert quaternion to rpy variables  
+        (roll, pitch, yaw)= euler_from_quaternion(quat_list)
+        #Set the robots yaw orientation
+        self.pth = yaw
+
+    def pickCentroid(self,msg):
+        print(len(msg.cells))
+        print(msg.cells[0])
 
 
     def test(self):
@@ -39,8 +85,6 @@ class PathPlanner:
         cspace_data()
         rospy.loginfo('all done!')
         #self.header.frame_id = cspace_data.header.frame_id
-
-       
 
 
     @staticmethod
