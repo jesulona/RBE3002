@@ -1,0 +1,3 @@
+#Get the centroids as a list of integers
+---
+geometry_msgs/Point[] centroids

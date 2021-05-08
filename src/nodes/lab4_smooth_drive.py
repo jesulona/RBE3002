@@ -9,7 +9,7 @@ from numpy import sqrt, pi, square
 from math import atan2
 from nav_msgs.srv import GetPlan
 
-class Lab3:
+class Lab4:
 
     def __init__(self):
         """
@@ -20,8 +20,8 @@ class Lab3:
         self.pth = 0    #Orientation (yaw) of the robot
         self.omega = 0  #Angular Velocity of the robot
 
-        #Initialize node, name it 'lab3'
-        rospy.init_node('lab3',anonymous= False) 
+        #Initialize node, name it 'lab4'
+        rospy.init_node('lab4',anonymous= True) 
 
         ### Tell ROS that this node publishes Twist messages on the '/cmd_vel' topic
         self.pub_move = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -29,12 +29,40 @@ class Lab3:
         ### Tell ROS that this node subscribes to Odometry messages on the '/odom' topic, when a message is received, call self.update_odom
         rospy.Subscriber('/odom', Odometry, self.update_odometry)
 
-        ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        #rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
+        ### Tell ROS that this node subscribes to Path messages on the '/path_planner/path' topic, and when a message is received, call self.execute_path
+        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
-        rospy.Subscriber('/path_planner/path', Path, queue_size=10)
+        ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
+        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
+
+        subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
+
+
+    def phaseOne(self):
+        '''
+        Function automatically searches the map until its full
+        '''
+        #Call the frontier service
+        #Analyze the frontier
+        #if frontiers exist, path plan to one
+
+        pathPlan = GetPlan()
+        print(test)
+        currPose = PoseStamped()
+        #Set data using update_odom()
+        goalPose = PoseStamped()
+        #Set data from the chosen centroid
+
+        self.plan_path(GetPlan)
+
+    def phaseTwo(self):
+        #idk what well do here
+
+    def pickCentroid(self,msg):
+        print(len(msg.cells))
+        print(msg.cells[0])
 
     def executePath(self, msg):
         """
@@ -253,4 +281,4 @@ class Lab3:
         rospy.spin()
 
 if __name__ == '__main__':
-    Lab3().run()
+    Lab4().run()
