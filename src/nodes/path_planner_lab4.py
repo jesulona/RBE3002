@@ -35,13 +35,11 @@ class PathPlanner:
         self.initMap()
     
 
-
     def initMap(self):
         rospy.loginfo('Setting up map for the path planner')
         cspace = rospy.ServiceProxy('cspace', GetMap)
         self.map = cspace().map
         print(self.map.data)
-
 
 
     def test(self):
@@ -480,7 +478,7 @@ class PathPlanner:
         :return        [boolean]       True if the cell is walkable, False otherwise
         """
         #print(x,y)
-        #print(self.isInBounds(x,y))
+        print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
         return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100))# and (mapdata.data[self.grid_to_index(x,y)] is not -1)
 
