@@ -100,9 +100,9 @@ class Lab4:
         print('Im outside')
 
         #set the goal position to the location in the frontierlist
-        goalPose.pose.position = centroidResp.centroids[position]
-        print(centroidResp.centroids[position])
-        print(goalPose)
+        goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(position)]
+        #print(centroidResp.centroids[position])
+        #print(goalPose)
         #Set data from the chosen centroid
         #Set data from the chosen centroid
 
@@ -119,8 +119,6 @@ class Lab4:
             self.go_to(everyWaypoint)
 
         
-
-
     '''
     def phaseTwo(self):
         #idk what well do here
@@ -137,23 +135,24 @@ class Lab4:
         """
         ToleranceVal = 0.1
 
-        rospy.wait_for_service('plan_path')
+        #rospy.wait_for_service('plan_path')
 
         #Robot's Current Position
-        PSstart = PoseStamped()
-        PSstart.pose.position = Point(self.px,self.py,0)
-        quat = quaternion_from_euler(0,0,self.pth)
-        PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+        #PSstart = PoseStamped()
+        #PSstart.pose.position = Point(self.px,self.py,0)
+        #quat = quaternion_from_euler(0,0,self.pth)
+        #PSstart.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
 
         #Request path Planniung Service 
-        req = GetPlan()
-        path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
-        resp = path_planner(PSstart,msg,ToleranceVal)
+        #req = GetPlan()
+        #path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
+        #resp = path_planner(PSstart,msg,ToleranceVal)
 
-        self.pathPublisher.publish(resp.plan)
+        #self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
-        resp.plan.poses.pop(0)
+        #resp.plan.poses.pop(0)
+        msg.poses.pop(0)
 
         for everyWaypoint in resp.plan.poses:
             #print(everyWaypoint)
