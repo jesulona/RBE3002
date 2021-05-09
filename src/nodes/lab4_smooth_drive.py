@@ -33,10 +33,10 @@ class Lab4:
         rospy.Subscriber('/odom', Odometry, self.update_odometry)
 
         ### Tell ROS that this node subscribes to Path messages on the '/path_planner/path' topic, and when a message is received, call self.execute_path
-        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
+        rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        rospy.Subscriber('/path_planner/path', Path, self.executePath)
+        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
@@ -110,13 +110,13 @@ class Lab4:
 
         resp = pathPlanner(currPose,goalPose,TOL)
 
-        self.pathPublisher.publish(resp.path)
+        #self.pathPublisher.publish(resp.path)
 
         #Remove the first location 
-        resp.plan.poses.pop(0)
+        #resp.plan.poses.pop(0)
 
-        for everyWaypoint in resp.plan.poses:
-            self.go_to(everyWaypoint)
+        #for everyWaypoint in resp.plan.poses:
+        #    self.go_to(everyWaypoint)
 
         
     '''
