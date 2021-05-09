@@ -154,7 +154,7 @@ class Lab4:
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
-        msg.poses.pop(0)
+        #msg.poses.pop(0)
 
         for everyWaypoint in msg.poses:
             #print(everyWaypoint)
@@ -277,7 +277,7 @@ class Lab4:
         """
         try:
             ROT = 1
-            SPEED = .2
+            SPEED = .15
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
