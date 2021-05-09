@@ -22,7 +22,7 @@ class PathPlanner:
                       
         rospy.Service('plan_a_path', GetPlan, self.plan_path)    #Service used for planning a path (gets start and end pose passed in)
 
-        self.pubPath = rospy.Publisher('/path_planner/path', GridCells, queue_size = 10)     #Used to publish a path when complete
+        self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)     #Used to publish a path when complete
         
         self.goalPub = rospy.Publisher('/goal', GridCells, queue_size=10)       #used for showing current goal in rviz
 
@@ -35,13 +35,11 @@ class PathPlanner:
         self.initMap()
     
 
-
     def initMap(self):
         rospy.loginfo('Setting up map for the path planner')
         cspace = rospy.ServiceProxy('cspace', GetMap)
         self.map = cspace().map
         print(self.map.data)
-
 
 
     def test(self):
@@ -367,13 +365,15 @@ class PathPlanner:
         deepcopyofpath = deepcopy(path)
         #print(path)
 
+        #Removed to make path object
+        '''
         for everyLoc in path:
             xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
             pathCells.cells.append(xyCoordPath)
             pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
             self.pubPath.publish(pathCells)
             rospy.sleep(0.05)      
-
+        '''
         return path
 
     
@@ -419,6 +419,8 @@ class PathPlanner:
         print(optimizedPath)
         return optimizedPath
 
+
+
     def path_to_message(self, mapdata, path):
         """
         Takes a path on the grid and returns a Path message.
@@ -430,6 +432,7 @@ class PathPlanner:
         pathMessage.poses = self.path_to_poses(mapdata,path)
         pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
+        self.pubPath.publish(pathMessage)
         return pathMessage
 
 
@@ -475,9 +478,9 @@ class PathPlanner:
         :return        [boolean]       True if the cell is walkable, False otherwise
         """
         #print(x,y)
-        #print(self.isInBounds(x,y))
+        print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
-        return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] == 0) and (mapdata.data[self.grid_to_index(x,y)] is not -1))
+        return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100))# and (mapdata.data[self.grid_to_index(x,y)] is not -1)
 
     def grid_to_index(self, x, y):
         """

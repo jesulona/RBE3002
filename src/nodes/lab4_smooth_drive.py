@@ -36,7 +36,7 @@ class Lab4:
         #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.executePath)
+        rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
@@ -145,7 +145,9 @@ class Lab4:
 
         #Request path Planniung Service 
         #req = GetPlan()
-        #path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
+
+        #path_planner = rospy.ServiceProxy('/plan_a_path',GetPlan)
+
         #resp = path_planner(PSstart,msg,ToleranceVal)
 
         #self.pathPublisher.publish(resp.plan)
@@ -154,7 +156,7 @@ class Lab4:
         #resp.plan.poses.pop(0)
         msg.poses.pop(0)
 
-        for everyWaypoint in resp.plan.poses:
+        for everyWaypoint in msg.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
 
