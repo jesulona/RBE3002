@@ -49,25 +49,48 @@ class Lab4:
         '''
         Function automatically searches the map until its full
         '''
-        TOL = .1
-        #Call the frontier service
-        #Service returns a list of points representing centroids on the map
-        centroids = rospy.ServiceProxy('getFrontiers',frontierList)
-        pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
-        #Analyze the frontier
-        #if frontiers exist, path plan to one
+        i = 0
+        try: 
 
-        currPose = PoseStamped()
-        currPose.pose.position = Point(self.px, self.py, 0)
-        quat = quaternion_from_euler(0,0,self.pth)
-        currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+            TOL = .1
+            #Call the frontier service
+            #Service returns a list of points representing centroids on the map
+            centroids = rospy.ServiceProxy('getFrontiers',frontierList)
+            pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
+            #Analyze the frontier
+            #if frontiers exist, path plan to one
+
+            currPose = PoseStamped()
+            currPose.pose.position = Point(self.px, self.py, 0)
+            quat = quaternion_from_euler(0,0,self.pth)
+            currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+            
+            goalPose = PoseStamped()
+            goalPose.pose.position = centroids().centroids[0]
+            #Set data from the chosen centroid
+
+            #Get response for path plan request
+
+            resp = pathPlanner(currPose,goalPose,TOL)
+
+        except: 
+            i+=1
+            goalPose = PoseStamped()
+            goalPose.pose.position = centroids().centroids[0 + i]
+            #Set data from the chosen centroid
+            resp = pathPlanner(currPose,goalPose,TOL)
+
+        self.pathPublisher.publish(resp.plan)
+        print(resp.plan.poses)
         
-        goalPose = PoseStamped()
-        goalPose.pose.position = centroids().centroids[0]
-        #Set data from the chosen centroid
+        #Extract Waypoints - start position
+        resp.plan.poses.pop(0)
 
-        plan = pathPlanner(currPose, goalPose, TOL)
-        print(plan.plan.poses)
+        for everyWaypoint in resp.plan.poses:
+            #print(everyWaypoint)
+            self.go_to(everyWaypoint)
+
+
 
     '''
     def phaseTwo(self):

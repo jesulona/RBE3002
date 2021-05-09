@@ -9,7 +9,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
 from nav_msgs.msg import Odometry
-from rbe3002_lab3.srv._frontierList import frontierList, frontierListResponse, frontierListRequest
+from rbe3002_lab3.srv import frontierList, frontierListResponse, frontierListRequest
 
 
 class PathPlanner:
