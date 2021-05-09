@@ -477,7 +477,7 @@ class PathPlanner:
         #print(x,y)
         #print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
-        return self.isInBounds(x,y) # and ((mapdata.data[self.grid_to_index(x,y)] == 0) and (mapdata.data[self.grid_to_index(x,y)] is not -1))
+        return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] == 0) and (mapdata.data[self.grid_to_index(x,y)] is not -1))
 
     def grid_to_index(self, x, y):
         """

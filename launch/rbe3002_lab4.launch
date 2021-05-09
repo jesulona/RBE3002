@@ -32,6 +32,9 @@
 
   <!-- AMCL -->
   <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+
+  <!--Run the tranformer to set the center of the odom frame to the map frame-->
+  <!--<node name="static_transform_publisher" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /map /odom 100"/>-->
   
   <!--<env name="GAZEBO_MODEL_PATH" value="$(find RBE3002_template)/models:$(optenv GAZEBO_MODEL_PATH"/>
   <include file="$(find rbe3002-turtlebot)/launch/turtlebot3002_world.launch">

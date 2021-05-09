@@ -218,6 +218,7 @@ class Frontier:
         :param  list [list<list<int>>] A list of frontiers according to their index
         :return list [list<Point>]     A list of centroids in the world frame
         '''
+        print(list)
         centCells = GridCells()
         centCells.cell_width = self.map.info.resolution
         centCells.cell_height = self.map.info.resolution
@@ -238,6 +239,7 @@ class Frontier:
             point = Point()
             point.x = worldCentroid.x #xCentroid
             point.y = worldCentroid.y #yCentroid
+            point.z = len(each)
             centCells.cells.append(point)
 
         self.pubCPoint.publish(centCells)
