@@ -50,46 +50,59 @@ class Lab4:
         Function automatically searches the map until its full
         '''
         i = 0
-        try: 
+    
+        TOL = .1
+        #Call the frontier service
+        #Service returns a list of points representing centroids on the map
+        centroids = rospy.ServiceProxy('getFrontiers',frontierList)
+        pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
+        #Analyze the frontier
+        #if frontiers exist, path plan to one
 
-            TOL = .1
-            #Call the frontier service
-            #Service returns a list of points representing centroids on the map
-            centroids = rospy.ServiceProxy('getFrontiers',frontierList)
-            pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
-            #Analyze the frontier
-            #if frontiers exist, path plan to one
-
-            currPose = PoseStamped()
-            currPose.pose.position = Point(self.px, self.py, 0)
-            quat = quaternion_from_euler(0,0,self.pth)
-            currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
-            
-            goalPose = PoseStamped()
-            goalPose.pose.position = centroids().centroids[0]
-            #Set data from the chosen centroid
-
-            #Get response for path plan request
-
-            resp = pathPlanner(currPose,goalPose,TOL)
-
-        except: 
-            i+=1
-            goalPose = PoseStamped()
-            goalPose.pose.position = centroids().centroids[0 + i]
-            #Set data from the chosen centroid
-            resp = pathPlanner(currPose,goalPose,TOL)
-
-        self.pathPublisher.publish(resp.plan)
-        print(resp.plan.poses)
+        currPose = PoseStamped()
+        currPose.pose.position = Point(self.px, self.py, 0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
-        #Extract Waypoints - start position
+        goalPose = PoseStamped()
+        totalWeight = 0
+        
+        #search through every path in the centriods function
+        for path in centroids().centroids:
+            #need to take the centriod variable and calc the euclidean dist for each one of those
+
+            #create the euclidean distance between the centriod and the robot pos
+            euclidean_dist_to_centroid = self.calc_distance(self.px, path.x, self.py, path.y)
+
+            #get the size of the frontier
+            size_of_frontier = path.z
+
+            #add somevariable to weigh the euclidean dist and the size of the frontier
+            currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
+
+            if currTotalWeight > totalWeight:
+                #set the position in the queue
+                position = path
+                totalWeight = currTotalWeight
+
+        #set the goal position to the location in the frontierlist
+        goalPose.pose.position = centroids().centroids[position]
+        #Set data from the chosen centroid
+        #Set data from the chosen centroid
+
+        #Get response for path plan request
+
+        resp = pathPlanner(currPose,goalPose,TOL)
+
+        self.pathPublisher.publish(resp.path)
+
+        #Remove the first location 
         resp.plan.poses.pop(0)
 
         for everyWaypoint in resp.plan.poses:
-            #print(everyWaypoint)
             self.go_to(everyWaypoint)
 
+        
 
 
     '''
