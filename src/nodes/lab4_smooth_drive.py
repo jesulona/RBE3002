@@ -8,6 +8,9 @@ from tf.transformations import euler_from_quaternion,quaternion_from_euler
 from numpy import sqrt, pi, square
 from math import atan2
 from nav_msgs.srv import GetPlan
+from rbe3002_lab3.srv import frontierList, frontierListResponse, frontierListRequest
+
+
 
 class Lab4:
 
@@ -39,31 +42,41 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
+        self.phaseOne()
+
 
     def phaseOne(self):
         '''
         Function automatically searches the map until its full
         '''
+        TOL = .1
         #Call the frontier service
+        #Service returns a list of points representing centroids on the map
+        centroids = rospy.ServiceProxy('getFrontiers',frontierList)
+        pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
         #Analyze the frontier
         #if frontiers exist, path plan to one
 
-        pathPlan = GetPlan()
-        print(test)
         currPose = PoseStamped()
-        #Set data using update_odom()
+        currPose.pose.position = Point(self.px, self.py, 0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+        
         goalPose = PoseStamped()
+        goalPose.pose.position = centroids().centroids[0]
         #Set data from the chosen centroid
 
-        self.plan_path(GetPlan)
+        plan = pathPlanner(currPose, goalPose, TOL)
+        print(plan.plan.poses)
 
+    '''
     def phaseTwo(self):
         #idk what well do here
 
     def pickCentroid(self,msg):
         print(len(msg.cells))
         print(msg.cells[0])
-
+    '''
     def executePath(self, msg):
         """
         Takes in a Path message as the goal
@@ -93,6 +106,8 @@ class Lab4:
         for everyWaypoint in resp.plan.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
+
+
 
     def send_speed(self, linear_speed, angular_speed):
         """

@@ -19,15 +19,29 @@ class PathPlanner:
         Class constructor
         """
         rospy.init_node("path_planner", anonymous = False)
+                      
+        rospy.Service('plan_a_path', GetPlan, self.plan_path)    #Service used for planning a path (gets start and end pose passed in)
 
-        #rospy.Subscriber('/odom', Odometry, self.update_odometry)           #Keep track of robots current position                       
-        self.serv = rospy.Service('/plan_path', GetPlan, self.plan_path)    #Service used for planning a path (gets start and end pose passed in)
+        self.pubPath = rospy.Publisher('/path_planner/path', GridCells, queue_size = 10)     #Used to publish a path when complete
+        
+        self.goalPub = rospy.Publisher('/goal', GridCells, queue_size=10)       #used for showing current goal in rviz
 
-        self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)     #Used to publish a path when complete
-        #self.centroidOptions = rospy.Subscriber('/centroid/point',GridCells,self.pickCentroid)      #Used to recieve centroid options
+        #A Star Publishers
+        self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
+        
         
         ## Sleep to allow roscore to do some housekeeping
         rospy.sleep(1.0)
+        self.initMap()
+    
+
+
+    def initMap(self):
+        rospy.loginfo('Setting up map for the path planner')
+        cspace = rospy.ServiceProxy('cspace', GetMap)
+        self.map = cspace().map
+        print(self.map.data)
+
 
 
     def test(self):
@@ -42,6 +56,22 @@ class PathPlanner:
         print(centroidList().centroids[0])
         print('hello')
         #self.header.frame_id = cspace_data.header.frame_id
+
+
+    def request_map(self):
+        """
+        Requests the map from the map server.
+        :return [OccupancyGrid] The grid if the service call was successful,
+                                None in case of error.
+        """
+        rospy.loginfo("Requesting the map")     #log info
+        try:
+            mapServer = rospy.ServiceProxy('static_map', GetMap)    #Request data from the map server
+            return mapServer().map    #Get the map parameter from the mapServer object
+        except Exception as e:
+            print(e)
+            print('Failed on world_to_grid()')
+            return None
 
 
     @staticmethod
@@ -141,7 +171,7 @@ class PathPlanner:
 
         return PoseStampedList
 
-    def neighbors_of_4(mapdata, x, y):
+    def neighbors_of_4(self,mapdata, x, y):
         """
         Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
         :param mapdata [OccupancyGrid] The map information.
@@ -161,37 +191,36 @@ class PathPlanner:
         #If x is not the value next to the boarder
         if (x!=mapdata.info.width-1):
             #Check is cell is walkable
-            if (PathPlanner.is_cell_walkable(mapdata, x+1, y)):
+            if (self.is_cell_walkable(mapdata, x+1, y)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x+1,y))
 
         #If the x val is not the 0 boundary
         if (x!=0):
             #Check is cell is walkable
-            if(PathPlanner.is_cell_walkable(mapdata, x-1, y)):
+            if(self.is_cell_walkable(mapdata, x-1, y)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x-1,y))
         
         #If y is not the value next to the boarder
         if (y!=mapdata.info.height-1):
             #Check is cell is walkable
-            if (PathPlanner.is_cell_walkable(mapdata, x, y+1)):
+            if (self.is_cell_walkable(mapdata, x, y+1)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y+1))
 
         #If the y val is not the 0 boundary
         if (y!=0):
             #Check is cell is walkable
-            if(PathPlanner.is_cell_walkable(mapdata, x, y-1)):
+            if(self.is_cell_walkable(mapdata, x, y-1)):
                 #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y-1))
 
         return availibleSpaces
         
     
-    
-    @staticmethod
-    def neighbors_of_8(mapdata, x, y):
+
+    def neighbors_of_8(self,mapdata, x, y):
         """
         Returns the walkable 8-neighbors cells of (x,y) in the occupancy grid.
         :param mapdata [OccupancyGrid] The map information.
@@ -201,23 +230,23 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
 
-        availibleSpaces = PathPlanner.neighbors_of_4(mapdata, x, y)
+        availibleSpaces = self.neighbors_of_4(mapdata, x, y)
 
         
         if(x!=0 and y!=0):
-            if(PathPlanner.is_cell_walkable(mapdata, x-1,y-1)):
+            if(self.is_cell_walkable(mapdata, x-1,y-1)):
                 availibleSpaces.append((x-1,y-1))
 
         if(x!=mapdata.info.width-1 and y!=mapdata.info.height-1):
-            if(PathPlanner.is_cell_walkable(mapdata, x+1,y+1)):
+            if(self.is_cell_walkable(mapdata, x+1,y+1)):
                 availibleSpaces.append((x+1,y+1))
 
         if(x!=mapdata.info.width-1 and y!=0):
-            if(PathPlanner.is_cell_walkable(mapdata, x+1,y-1)):
+            if(self.is_cell_walkable(mapdata, x+1,y-1)):
                 availibleSpaces.append((x+1,y-1))
 
         if(x!=0 and y!=mapdata.info.height-1):
-            if(PathPlanner.is_cell_walkable(mapdata, x-1,y+1)):
+            if(self.is_cell_walkable(mapdata, x-1,y+1)):
                 availibleSpaces.append((x-1,y+1))
 
         return availibleSpaces
@@ -233,13 +262,14 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
-        
+        print('goal')
+        print(goal)
         #Raise an error if the goal is out bounds, i.e. the goal is an object or in c-space
-        if PathPlanner.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
+        if self.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Goal is Out of Bounds!")
 
         #Raise an error is the start is out bounds, i.e. the start is an object or in c-space
-        if PathPlanner.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
+        if self.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Start is Out of Bounds!")
         
         #creating a frontier to use the priority queue class to follow the sudo code
@@ -276,7 +306,9 @@ class PathPlanner:
 
             #generate the 8 neighbors of topPriority
             #for each neighbor:
-            for Neighbor in PathPlanner.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
+            #print('priority')
+            #print(topPriority[0],topPriority[1])
+            for Neighbor in self.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
                 gVal = cost[topPriority] #add the topPriority to the cost of where you've been
                 #calculate how much it would cost to get to neighbor
                 hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
@@ -401,7 +433,7 @@ class PathPlanner:
         return pathMessage
 
 
-        
+    #Needs to be slightly updated    
     def plan_path(self, msg):
         """
         Plans a path between the start and goal locations in the requested.
@@ -410,83 +442,68 @@ class PathPlanner:
         """
         ## Request the map
         ## In case of error, return an empty path
-        mapdata = PathPlanner.request_map()
+        mapdata = self.map
         if mapdata is None:
             return Path()
-        ## Calculate the C-space and publish it
-        cspacedata = self.calc_cspace(mapdata, 1)
+        
+        #Publish goal to rviz for visualization
+        goalCell = GridCells()
+        goalCell.header.frame_id = 'map'
+        goalCell.cell_height = self.map.info.resolution
+        goalCell.cell_width = self.map.info.resolution
+        goalCell.cells.append(msg.goal.pose.position)
+        self.goalPub.publish(goalCell)
+        print('published')
+
         ## Execute A*
-        start = PathPlanner.world_to_grid(mapdata, msg.start.pose.position)
-        goal  = PathPlanner.world_to_grid(mapdata, msg.goal.pose.position)
-        path  = self.a_star(cspacedata, start, goal)
+        start = self.world_to_grid(mapdata, msg.start.pose.position)
+        goal  = self.world_to_grid(mapdata, msg.goal.pose.position)
+        print('goal is ' + str(goal))
+        path  = self.a_star(mapdata, start, goal)
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
         return self.path_to_message(mapdata, waypoints)
 
 
-####_____________________________________________________________________________________####
-    '''
-
-
-    def occupanyGridIsComplete(self,msg):
-        """ Early Stage*******
-        will do check if the occupancy Grid has been filled 
-        and all frontiers have been explored 
+    def is_cell_walkable(self, mapdata, x, y):
         """
-        ## Go through each cell in the occupancy grid (range used to start on row/col 0)
-        for y in range(msg.info.height):
-            for x in range(msg.info.width):
-                cellVal = msg.data[PathPlanner.grid_to_index(mapdata, x, y)]
-                if cellVal > 0 :
-                    #donothing
-                else:
-                    return False
-        return True 
-                
-    def getFrontier(self,msg):
-        """ Early Stage*******
-        getFrontier will get the mapdata
-        find cells with unknown neighbors
-        calculate the frontier
-        plan a path to the centroid of frontier
+        Function returns true if a cell is within the boundary, not unknown, and not an obstacle
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [boolean]       True if the cell is walkable, False otherwise
         """
-        everythingFound = False
+        #print(x,y)
+        #print(self.isInBounds(x,y))
+        #print(mapdata.data[self.grid_to_index(x,y)])
+        return self.isInBounds(x,y) # and ((mapdata.data[self.grid_to_index(x,y)] == 0) and (mapdata.data[self.grid_to_index(x,y)] is not -1))
 
-        if (occupanyGridIsComplete(msg)):
-            everythingFound = True
+    def grid_to_index(self, x, y):
+        """
+        Returns the index corresponding to the given (x,y) coordinates in the occupancy grid.
+        :param x [int] The cell X coordinate.
+        :param y [int] The cell Y coordinate.
+        :return  [int] The index.
+        """
+        index = y * self.map.info.width + x
+        #print(index)
+        return index
 
-        while not everythingFound:
+    def isInBounds(self, x, y):
+        '''
+        A cell is in bounds if its within the range of the occupancy grid
+        :param x,y [int] The x and y coordinates in the grid
+        '''
+        return (x in range(0,self.map.info.width - 1)) and (y in range(0,self.map.info.height - 1))
 
-            ## Request the Gmap
-            ## In case of error, return an empty path
-            mapdata = deepcopy(msg) # PathPlanner.request_map()
-            if mapdata is None:
-                return Path()
-    
-            ## find the froniter list
-            frontierList = PathPlanner.unknownNeighbour(mapdata)
 
-            ##Calculate centroid of frontier
-            centroid = PathPlanner.findCentroid(frontierList,mapdata)
 
-            ## Calculate the C-space and publish it
-            cspacedata = self.calc_cspace(mapdata, 1)
-
-            ## Execute A*
-            start = PathPlanner.world_to_grid(mapdata, msg.start.pose.position)
-            goal  = PathPlanner.world_to_grid(mapdata, centroid???)
-            path  = self.a_star(cspacedata, start, goal)
-            ## Optimize waypoints
-            waypoints = PathPlanner.optimize_path(path)
-            ## Return a Path message
-            return self.path_to_message(mapdata, waypoints)
-    '''
     def run(self):
         """
         Runs the node until Ctrl-C is pressed.
         """
-        self.test()
+        #self.test()
         # mapdata = PathPlanner.request_map()
         # self.calc_cspace(mapdata,1)
         # self.a_star(mapdata,(1,1),(34,7))
