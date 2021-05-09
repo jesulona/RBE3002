@@ -50,14 +50,20 @@ class Lab4:
         Function automatically searches the map until its full
         '''
         i = 0
+
+        # rospy.wait_for_service('plan_a_path')
+        # rospy.wait_for_service('getFrontiers')
     
         TOL = .1
         #Call the frontier service
         #Service returns a list of points representing centroids on the map
+        #centroidReq = frontierList()
         centroids = rospy.ServiceProxy('getFrontiers',frontierList)
         pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
         #Analyze the frontier
         #if frontiers exist, path plan to one
+
+        centroidResp = centroids()
 
         currPose = PoseStamped()
         currPose.pose.position = Point(self.px, self.py, 0)
@@ -66,9 +72,13 @@ class Lab4:
         
         goalPose = PoseStamped()
         totalWeight = 0
+
+        print("Bout to get this bread")
+
         
         #search through every path in the centriods function
-        for path in centroids().centroids:
+        for path in centroidResp.centroids:
+            print("Im inside")
             #need to take the centriod variable and calc the euclidean dist for each one of those
 
             #create the euclidean distance between the centriod and the robot pos
@@ -81,12 +91,18 @@ class Lab4:
             currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
 
             if currTotalWeight > totalWeight:
+                print("Im checking")
                 #set the position in the queue
                 position = path
+
                 totalWeight = currTotalWeight
 
+        print('Im outside')
+
         #set the goal position to the location in the frontierlist
-        goalPose.pose.position = centroids().centroids[position]
+        goalPose.pose.position = centroidResp.centroids[position]
+        print(centroidResp.centroids[position])
+        print(goalPose)
         #Set data from the chosen centroid
         #Set data from the chosen centroid
 
