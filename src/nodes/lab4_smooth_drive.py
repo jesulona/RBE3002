@@ -65,17 +65,17 @@ class Lab4:
         goalPose = PoseStamped()
         totalWeight = 0
         #search through every path in the centriods function
-        for path in centroids():
+        for path in centroids().centroids:
             #need to take he centriod variable and calc the euclidean dist for each one of those
 
             #create the euclidean distance between the centriod and the robot pos
-            euclidean_dist_to_centriod = self.calc_distance(self.px, centroids[path][0], self.py, centroids[path][0])
+            euclidean_dist_to_centroid = self.calc_distance(self.px, path.x, self.py, path.y)
 
             #get the size of the frontier
-            size_of_frontier = centriods[path].z
+            size_of_frontier = path.z
 
             #add somevariable to weigh the euclidean dist and the size of the frontier
-            currTotalWeight = euclidean_dist_to_centriod + size_of_frontier
+            currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
 
             if currTotalWeight > totalWeight:
                 #set the position in the queue
