@@ -63,7 +63,27 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        goalPose.pose.position = centroids().centroids[0]
+        totalWeight = 0
+        #search through every path in the centriods function
+        for path in centroids():
+            #need to take he centriod variable and calc the euclidean dist for each one of those
+
+            #create the euclidean distance between the centriod and the robot pos
+            euclidean_dist_to_centriod = self.calc_distance(self.px, centroids[path][0], self.py, centroids[path][0])
+
+            #get the size of the frontier
+            size_of_frontier = centriods[path].z
+
+            #add somevariable to weigh the euclidean dist and the size of the frontier
+            currTotalWeight = euclidean_dist_to_centriod + size_of_frontier
+
+            if currTotalWeight > totalWeight:
+                #set the position in the queue
+                position = path
+                totalWeight = currTotalWeight
+
+        #set the goal position to the location in the frontierlist
+        goalPose.pose.position = centroids().centroids[position]
         #Set data from the chosen centroid
 
         plan = pathPlanner(currPose, goalPose, TOL)
