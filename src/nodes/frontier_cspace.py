@@ -11,8 +11,6 @@ from copy import deepcopy
 from rbe3002_lab3.srv import frontierList, frontierListResponse, frontierListRequest
 
 
-
-
 class Frontier:
      
     def __init__(self):
@@ -21,29 +19,15 @@ class Frontier:
         rospy.Subscriber('/map', OccupancyGrid ,self.updateMap)
         rospy.sleep(.5)
 
-        self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)
-        self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)
-        self.pubCentroid = rospy.Publisher('/move_base_simple/goal',PoseStamped,queue_size=10)
-        self.pubCPoint = rospy.Publisher('/centroid/point',GridCells,queue_size=10)
+        self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)     #c space in rviz simulation
+        self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)        #Frontier in rviz simulation
+        self.pubCPoint = rospy.Publisher('/centroid/point',GridCells,queue_size=10)             #centroids of frontier in rviz
         
-        self.cSpaceService = rospy.Service('cspace', GetMap, self.calc_cspace)
-        self.frontierService = rospy.Service('getFrontiers', frontierList, self.returnCentroids)
+        rospy.Service('cspace', GetMap, self.calc_cspace)                       #Service used for publishing cspace
+        rospy.Service('getFrontiers', frontierList, self.returnCentroids)       #Service used for publishing frontiers
         rospy.sleep(.5)
 
         rospy.loginfo('Init completed')
-
-
-    def returnCentroids(self,msg):
-        '''
-        Used in Service Call
-        '''
-        frontiers = self.getFrontier()
-        dilatedFrontiers = self.dilateAndErode(frontiers)
-        frontierGroups = self.splitFrontiers(dilatedFrontiers)
-        centroidList = self.getCentroids(frontierGroups)
-        centroidList = frontierListResponse(centroidList)
-        return centroidList
-
 
     def updateMap(self, msg):
         '''
@@ -51,6 +35,18 @@ class Frontier:
         :param msg [OccupandyGrid] The new map to be stored
         '''
         self.map = msg
+
+
+    def returnCentroids(self,msg):
+        '''
+        Used for centroid service call
+        '''
+        frontiers = self.getFrontier()
+        dilatedFrontiers = self.dilateAndErode(frontiers)
+        frontierGroups = self.splitFrontiers(dilatedFrontiers)
+        centroidList = self.getCentroids(frontierGroups)
+        centroidList = frontierListResponse(centroidList)
+        return centroidList
     
 
     def dilateAndErode(self, frontierGrid):
@@ -120,6 +116,11 @@ class Frontier:
         
 
     def getFrontier(self):
+        '''
+        Function determines the frontier edges present in the map
+        Publishes cspace, frontiers and centroids to rviz as well
+        :returns occupancy grid with frontiers set to obstacles
+        '''
         THRESH = 50     #The threshold for something being considered an obstacle
         frontierWorldCoords = []   #initialize a list for storing frontier cell values
         #Get a copy of the current map with the calculated cspace for further editing
@@ -240,105 +241,9 @@ class Frontier:
             centCells.cells.append(point)
 
         self.pubCPoint.publish(centCells)
-        print(type(centCells))
-        print(type(centCells.cells[1]))
+
         return centCells.cells
                 
-
-        '''
-        listofCentroidCenters = []
-        centroidNlist = []
-        listofFrontierCells = listofFrontierGrid.data
-        n = 0
-        bigListOfFrontiers = []
-        
-        #for each in frontier occupancy grid where val ==100 & does not belong in list
-        for y in range(listofFrontierGrid.info.height):   
-            for x in range(listofFrontierGrid.info.width):
-                parent = self.grid_to_index(x,y)
-                if parent == 100 and not self.caseysFunction(listofFrontierCells, self.grid_to_index(x,y)):
-
-                # for each neighbor of 8 (x,y)
-                    for neighbor in has_unknown_neighbors_of_8(x,y):
-                    #if self.grid_to_index(each) isn't present in frontier list
-                        if self.grid_to_index(x,y) not in bigListOfFrontiers[]:
-                            bigListOfFrontiers[].append(self.grid_to_index(x,y))
-                        # add to the list(item)
-        
-        for y in range(listofFrontierGrid.info.height-1):
-            
-            for x in range(listofFrontierGrid.info.width-1):
-                if listofFrontierCells[self.grid_to_index(x,y)] >= 50:
-                    
-                    #print(listofFrontierCoords)
-                    print('help')
-        
-                    listofNeigh = self.neighbors_of_8(x, y, mapdata)
-
-                    if (x+1,y+1) in listofNeigh:
-                        #centroidNlist.append([])
-                        centroidNlist[n].append(listofFrontierCells[x+1,y+1])
-                    n +=1
-        
-        print("I made clusters")
-    
-        for everyCluster in centroidNlist:
-            totalX =0
-            totalY =0
-
-            for everyCell in everyCluster:
-                worldPoint = self.grid_to_world(everyCell[0], everyCell[1]) 
-
-                    
-                xVal = worldPoint.x
-                yVal = worldPoint.y
-                totalX += xVal
-                totalY += yVal
-                length = len(everyCluster)
-            averageX = totalX/length
-            averageY = totalY/length
-            centroidInWorld = (averageX,averageY)
-            listofCentroidCenters.append(centroidInWorld)
-
-        
-        PoseStampedMessage = PoseStamped()
-        cPoint = Point(listofCentroidCenters[0][0],listofCentroidCenters[0][1],0)
-        PoseStampedMessage.pose.position = cPoint
-        #PoseStampedMessage.header = mapdata.header
-        quat = quaternion_from_euler(0,0,1)
-        PoseStampedMessage.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
-        self.pubCentroid.publish(PoseStampedMessage)
-        print(PoseStampedMessage)
-        
-        PointStampedMessage = PointStamped()
-        PointStampedMessage.point.x = listofCentroidCenters[0][0]
-        PointStampedMessage.point.y = listofCentroidCenters[0][1]
-        PointStampedMessage.header.frame_id = mapdata.header.frame_id 
-        self.pubCPoint.publish(PointStampedMessage)
-        
-        return listofCentroidCenters
-        '''
-            
-
-    def centroidQueue(self, listofFrontierCells, mapdata):
-        # return list of world coord for each frontier
-
-        #calc Centriod within list
-        self.findCentroid(listofFrontierCells, mapdata)
-
-        #Note size of each one
-        #if doing frontier area by length, take length of cluster
-        length = self.findCentroid.length
-
-        #note where robot is
-        PoseStampedMessage = PoseStamped()
-        PoseStampedMessage.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
-
-        #enter into frontier according to rank
-        #cost formula
-        #total cost = euclidean distance + length of frontier
-        #rank based on total cost?
-        #should there be some sort of factor that increases one weight over another
 
 
     def grid_to_index(self, x, y):
@@ -350,6 +255,7 @@ class Frontier:
         """
         index = y * self.map.info.width + x
         return index
+
 
 
     def calc_cspace(self,msg):
@@ -652,8 +558,7 @@ class Frontier:
             print('Failed on world_to_grid()')
 
 
-    def run(self):
-        #self.returnCentroids(None)    
+    def run(self):  
         rospy.spin()    #Required for ROS
 
 
