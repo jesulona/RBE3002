@@ -203,10 +203,10 @@ class Lab4:
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
-        end = False     #flag for the robot motion
+        end = False     #flag for the robot  motion
         prevError = 0
         omegaInt = 0
-
+ 
         print('SPEEDING UP')
         for x in range(1000):
             omegaError = 0 - self.omega
