@@ -73,50 +73,52 @@ class Lab4:
         goalPose = PoseStamped()
         totalWeight = 0
         
-        #search through every point in the centriods function
-        for point in centroidResp.centroids:
+        if len(centroidResp.centroids) is not 0:
+            #search through every point in the centriods function
+            for point in centroidResp.centroids:
 
-            #need to take the centriod variable and calc the euclidean dist for each one of those
+                #need to take the centriod variable and calc the euclidean dist for each one of those
 
-            #create the euclidean distance between the centriod and the robot pos
-            euclidean_dist_to_centroid = self.calc_distance(self.px, point.x, self.py, point.y)
+                #create the euclidean distance between the centriod and the robot pos
+                euclidean_dist_to_centroid = self.calc_distance(self.px, point.x, self.py, point.y)
 
-            #get the size of the frontier
-            size_of_frontier = point.z
+                #get the size of the frontier
+                size_of_frontier = point.z
 
-            #add somevariable to weigh the euclidean dist and the size of the frontier
-            currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
+                #add somevariable to weigh the euclidean dist and the size of the frontier
+                currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
 
-            if currTotalWeight > totalWeight:
-                print("Im checking")
-                #set the position in the queue
-                goalPoint = point
+                if currTotalWeight > totalWeight:
+                    print("Im checking")
+                    #set the position in the queue
+                    goalPoint = point
 
-                totalWeight = currTotalWeight
+                    totalWeight = currTotalWeight
 
-        print('Im outside')
 
         #set the goal position to the location in the frontierlist
-        goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
+            goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE MEAT OF THE FUNCTION
-        resp = pathPlanner(currPose,goalPose,TOL)
+            resp = pathPlanner(currPose,goalPose,TOL)
 
-        resp.plan.poses.pop(0)
-        for everyWaypoint in resp.plan.poses:
-            #print(everyWaypoint)
-            self.go_to(everyWaypoint)
+            resp.plan.poses.pop(0)
+            for everyWaypoint in resp.plan.poses:
+                #print(everyWaypoint)
+                self.go_to(everyWaypoint)
 
-        rospy.sleep(1)
+            rospy.sleep(1)
         #Once the robot is at the target centroid
         #Recall the centroid service to see if any exist
-        newCents = centroids()
-        rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
+            newCents = centroids()
+            rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
 
-        #If centroids exist, repeat the function
-        if len(newCents.centroids) > 0:
-            self.phaseOne()
+            #If centroids exist, repeat the function
+            if len(newCents.centroids) > 0:
+                self.phaseOne()
+        else:
+            rospy.loginfo('phase 1 complete!')
         
     '''
     def phaseTwo(self):

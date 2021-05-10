@@ -8,12 +8,13 @@
 
   <!-- If is_sim, run the simulator! -->
   <group if="$(arg is_sim)">
-    <include file="$(find RBE3002_template)/launch/maze_sim.launch">
+    <include file="$(find rbe3002-turtlebot)/launch/turtlebot3002_world.launch">
+      <arg name="world_name" value="$(find rbe3002_final)/worlds/final_maze.world"/>
       <arg name="model" value="$(arg model)"/>
       <arg name="x_pos" value="$(arg x_pos)"/>
       <arg name="y_pos" value="$(arg y_pos)"/>
       <arg name="z_pos" value="$(arg z_pos)"/>
-      <arg name="maze" value="$(arg maze)"/>
+      <!--<arg name="maze" value="$(arg maze)"/>-->
     </include>
   </group>
   
