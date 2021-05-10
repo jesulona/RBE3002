@@ -30,7 +30,7 @@
   </include>
 
   <!-- AMCL -->
-  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+  <!--<include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>-->
 
   <!--Run the tranformer to set the center of the odom frame to the map frame-->
   <node name="static_transform_publisher" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /map /odom 100"/>
