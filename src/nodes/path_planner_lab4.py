@@ -24,7 +24,7 @@ class PathPlanner:
 
         self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)     #Used to publish a path when complete
         
-        self.goalPub = rospy.Publisher('/goal', PointStamped, queue_size=10)       #used for showing current goal in rviz
+        self.goalPub = rospy.Publisher('/centroidGoal', PointStamped, queue_size=10)       #used for showing current goal in rviz
 
         #A Star Publishers
         self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
@@ -460,7 +460,8 @@ class PathPlanner:
         #Publish goal to rviz for visualization
         goalPoint = PointStamped()
         goalPoint.header.frame_id = self.map.header.frame_id
-        goalPoint.point = msg.goal.pose.position
+        point = msg.goal.pose.position
+        goalPoint.point = point
         self.goalPub.publish(goalPoint)
         print('published')
 

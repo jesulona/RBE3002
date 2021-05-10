@@ -219,18 +219,18 @@ class Lab4:
         
         
         while(self.calc_distance(initX, self.px, initY, self.py) < distance - THRESH):
-            print('Running at speed')
+            #print('Running at speed')
             omegaError = 0 - self.omega
             omegaInt = omegaInt + omegaError
             omegaDir = omegaError - prevError        #Integral of error used for ki term
             self.send_speed(linear_speed,kpOmega*omegaError + kiOmega*omegaInt + kdOmega*omegaDir)
         
         #Since the robot is within the tolerance, brake
-        print('BRAKING')
+        #print('BRAKING')
         for u in range(1000):
             self.send_speed(linear_speed*(float(500-u)/1000),0)
         
-        print('Move Completed!')
+        #print('Move Completed!')
         self.send_speed(0,0)
 
     def calc_distance(self,xInit, xFinal, yInit, yFinal):
@@ -259,15 +259,18 @@ class Lab4:
             THRESH = .1                #Threshold for angle difference [rad]
             
             #Adjust the angle to determine which side of the x axis it lies on
-            if angle > pi:             
-                angle = angvle - 2*pi    #if 180-360, set angle to a negative angle
+            if angle >  pi:             
+                angle = angle - 2*pi    #if 180-360, set angle to a negative angle
             elif angle < -pi:
                 angle = angle + 2*pi    #if -180--360, set angle to positive angle
 
+
+
             #Rotate while the error is less than an error
-            while(abs(angle - self.pth) > THRESH):
+            while(abs(angle - self.pth) >= THRESH):
+                print(abs(angle - self.pth))
                 error = angle - self.pth
-                self.send_speed(0,aspeed)
+                self.send_speed(0,self.turnDirection(angle, self.pth)*aspeed)
             
             print('Done rotating')      #Print to confirm completion
 
@@ -275,9 +278,31 @@ class Lab4:
         except Exception as e:
             print('Failed on rotate')
             print(e)
-        
-        
+    
 
+    def turnDirection(self, goal, start):
+        #remember, positive = CCW, neg = CW
+        deltaAng = goal - start
+        ROT = 1
+        print('robot currently at ' + str((180/pi) * start+90))
+        print('robot needs to go to ' + str((180/pi) * goal+90))
+        if deltaAng <= 0:
+            if abs(deltaAng) >= pi:
+                print('Turning CCW')
+                return ROT
+            else: 
+                print('Turning CW')
+                return -1*ROT
+
+        elif deltaAng > 0:
+            if abs(deltaAng) > pi:
+                print('Turning CW')
+                return -1*ROT
+            else:
+                print('Turning CCW')
+                return ROT
+
+        
     def go_to(self, msg):
         """
         Calls rotate(), drive(), and rotate() to attain a given pose.
@@ -285,7 +310,7 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1
+            ROT = 1    #Set in turnDirection Function
             SPEED = .15
             goal = msg.pose
             
@@ -293,7 +318,7 @@ class Lab4:
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            self.rotate(angToGoal, self.turnDirection(angToGoal, self.pth))
+            self.rotate(angToGoal, ROT)
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
@@ -306,27 +331,13 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
-            self.rotate(angToGoal, self.turnDirection(yaw, self.pth))
+            self.rotate(angToGoal, ROT)
+            rospy.wait(2)
         except Exception as e:
             print('Failed on go_to()')
             print(e)
 
-    def turnDirection(self, goal, start):
-        #remember, positive = CCW, neg = CW
-        deltaAng = goal - start
-        ROT = 1
-        if deltaAng < 0:
-            if abs(deltaAng) > 180:
-                return ROT
-            else: 
-                return -ROT
-
-        elif deltaAng > 0:
-            if abs(deltaAng) > 180:
-                return -ROT
-            else:
-                return ROT
-
+    
                 
     def update_odometry(self, msg):
         """

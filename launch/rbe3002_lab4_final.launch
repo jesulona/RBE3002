@@ -30,7 +30,7 @@
   </include>
 
   <!-- AMCL -->
-  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+  <!--<include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>-->
 
   <!--Run the tranformer to set the center of the odom frame to the map frame-->
   <node name="static_transform_publisher" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /map /odom 100"/>
@@ -39,7 +39,7 @@
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002_lab3)/launch/turtlebot3_gazebo_model_lab4a.rviz"/>
 
   <!--Launch Path Planner Node for lab 4-->
-  <node name='path_planner' pkg='rbe3002_lab3' type='path_planner_lab4.py'/>
+  <!--<node name='path_planner' pkg='rbe3002_lab3' type='path_planner_lab4.py'/>-->
 
   <!--TODO: Launch motion node and any other required ones-->
   <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
