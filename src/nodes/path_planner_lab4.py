@@ -4,7 +4,7 @@ import math
 import rospy
 from nav_msgs.srv import GetPlan, GetMap
 from nav_msgs.msg import GridCells, OccupancyGrid, Path
-from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, PointStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler 
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
@@ -24,7 +24,7 @@ class PathPlanner:
 
         self.pubPath = rospy.Publisher('/path_planner/path', Path, queue_size = 10)     #Used to publish a path when complete
         
-        self.goalPub = rospy.Publisher('/goal', GridCells, queue_size=10)       #used for showing current goal in rviz
+        self.goalPub = rospy.Publisher('/goal', PointStamped, queue_size=10)       #used for showing current goal in rviz
 
         #A Star Publishers
         self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
@@ -458,12 +458,10 @@ class PathPlanner:
             return Path()
         
         #Publish goal to rviz for visualization
-        goalCell = GridCells()
-        goalCell.header.frame_id = 'map'
-        goalCell.cell_height = self.map.info.resolution
-        goalCell.cell_width = self.map.info.resolution
-        goalCell.cells.append(msg.goal.pose.position)
-        self.goalPub.publish(goalCell)
+        goalPoint = PointStamped()
+        goalPoint.header.frame_id = self.map.header.frame_id
+        goalPoint.point = msg.goal.pose.position
+        self.goalPub.publish(goalPoint)
         print('published')
 
         ## Execute A*
