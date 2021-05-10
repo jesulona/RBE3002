@@ -101,16 +101,16 @@ class Lab4:
             goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
-        #THIS IS THE MEAT OF THE FUNCTION
+        #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
             print(resp.plan)
-            print(split)
+            print('split')
             resp.plan.poses.pop(0)
             if len(resp.plan.poses) > 1:
                 resp.plan.poses.pop(-1)
-                if len(resp.plan.poses) > 2:
+                if len(resp.plan.poses) > 1:
                     resp.plan.poses.pop(-1)
-                    if len(resp.plan.poses) > 5:
+                    if len(resp.plan.poses) > 1:
                         resp.plan.poses.pop(-1)
 
             print(resp.plan)    
@@ -209,7 +209,7 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         kpOmega = .5    #kp for controller
         kiOmega = 0.0001
-        kdOmega = 0.003
+        kdOmega = 0.005
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
