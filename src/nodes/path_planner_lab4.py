@@ -39,7 +39,6 @@ class PathPlanner:
         rospy.loginfo('Setting up map for the path planner')
         cspace = rospy.ServiceProxy('cspace', GetMap)
         self.map = cspace().map
-        print(self.map.data)
 
 
     def test(self):
@@ -64,12 +63,17 @@ class PathPlanner:
         """
         rospy.loginfo("Requesting the map")     #log info
         try:
+            #catch map for static exception
+                #try dynamic map
             mapServer = rospy.ServiceProxy('static_map', GetMap)    #Request data from the map server
             return mapServer().map    #Get the map parameter from the mapServer object
         except Exception as e:
             print(e)
             print('Failed on world_to_grid()')
             return None
+
+        #acml -> static 
+        #gmap -> dynamic
 
 
     @staticmethod
@@ -443,9 +447,13 @@ class PathPlanner:
         Internally uses A* to plan the optimal path.
         :param req 
         """
+        #self.initMap()
         ## Request the map
-        ## In case of error, return an empty path
+        cspace = rospy.ServiceProxy('cspace', GetMap)
+        self.map = cspace().map
         mapdata = self.map
+        
+        ## In case of error, return an empty path
         if mapdata is None:
             return Path()
         
@@ -466,6 +474,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
+        #self.initMap()
         return self.path_to_message(mapdata, waypoints)
 
 

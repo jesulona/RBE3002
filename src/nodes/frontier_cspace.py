@@ -107,7 +107,7 @@ class Frontier:
         msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
         self.pubFrontierLine.publish(msg)
 
-        fixedFrontiers = self.map                       #Create a new occupancy grid object
+        fixedFrontiers = deepcopy(self.map)                       #Create a new occupancy grid object
         fixedFrontiers.data = dilutionMapData
         self.c_space = fixedFrontiers
 
@@ -272,7 +272,7 @@ class Frontier:
             THRESH = 50                     #Threshold for shading of a cell
             cspaceMap = list(self.map.data)     #Create a copy of existing map to expand obstacles with. Make list so its changeable
             worldCoordinates = []           #Initialize world coordinate list of obstacles
-
+            self.c_space = self.map
             rospy.loginfo("Calculating C-Space")
 
             ## Determine cspace for each layer of padding
@@ -282,13 +282,13 @@ class Frontier:
                 for y in range(self.map.info.height):
                     for x in range(self.map.info.width):
                         ## Inflate the obstacles where necessary
-                        if self.map.data[self.grid_to_index(x, y)] >= THRESH: 
+                        if self.c_space.data[self.grid_to_index(x, y)] >= THRESH: 
                             cspaceMap[self.grid_to_index(x, y)] = 100       #Set to 100 to make it 100% an obstacle
                             neighbors = self.neighbors_of_8(x, y, self.map)           #Get all walkable cells that neighbor main cell
                             for each in neighbors:
                                 cspaceMap[self.grid_to_index(each[0], each[1])] = 100  #Set cell to an obstacle in the map copy
                 #cspaceMap = tuple(cspaceMap)
-                self.map.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
+                self.c_space.data = deepcopy(cspaceMap)   #Set the mapdata to the new map for use in recursion. 
             
             ## Convert cspace coordinates to world coordinates (to avoid duplicates)
             for y in range(self.map.info.height):

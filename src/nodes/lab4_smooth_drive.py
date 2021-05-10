@@ -36,7 +36,7 @@ class Lab4:
         #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        rospy.Subscriber('/path_planner/path', Path, self.executePath)
+        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
@@ -72,52 +72,53 @@ class Lab4:
         
         goalPose = PoseStamped()
         totalWeight = 0
-
-        print("Bout to get this bread")
-
         
-        #search through every path in the centriods function
-        for path in centroidResp.centroids:
-            print("Im inside")
-            #need to take the centriod variable and calc the euclidean dist for each one of those
+        if len(centroidResp.centroids) is not 0:
+            #search through every point in the centriods function
+            for point in centroidResp.centroids:
 
-            #create the euclidean distance between the centriod and the robot pos
-            euclidean_dist_to_centroid = self.calc_distance(self.px, path.x, self.py, path.y)
+                #need to take the centriod variable and calc the euclidean dist for each one of those
 
-            #get the size of the frontier
-            size_of_frontier = path.z
+                #create the euclidean distance between the centriod and the robot pos
+                euclidean_dist_to_centroid = self.calc_distance(self.px, point.x, self.py, point.y)
 
-            #add somevariable to weigh the euclidean dist and the size of the frontier
-            currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
+                #get the size of the frontier
+                size_of_frontier = point.z
 
-            if currTotalWeight > totalWeight:
-                print("Im checking")
-                #set the position in the queue
-                position = path
+                #add somevariable to weigh the euclidean dist and the size of the frontier
+                currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
 
-                totalWeight = currTotalWeight
+                if currTotalWeight > totalWeight:
+                    print("Im checking")
+                    #set the position in the queue
+                    goalPoint = point
 
-        print('Im outside')
+                    totalWeight = currTotalWeight
+
 
         #set the goal position to the location in the frontierlist
-        goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(position)]
-        #print(centroidResp.centroids[position])
-        #print(goalPose)
-        #Set data from the chosen centroid
-        #Set data from the chosen centroid
+            goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
-        #Get response for path plan request
+        #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
+        #THIS IS THE MEAT OF THE FUNCTION
+            resp = pathPlanner(currPose,goalPose,TOL)
 
-        resp = pathPlanner(currPose,goalPose,TOL)
+            resp.plan.poses.pop(0)
+            for everyWaypoint in resp.plan.poses:
+                #print(everyWaypoint)
+                self.go_to(everyWaypoint)
 
-        self.pathPublisher.publish(resp.path)
+            rospy.sleep(1)
+        #Once the robot is at the target centroid
+        #Recall the centroid service to see if any exist
+            newCents = centroids()
+            rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
 
-        #Remove the first location 
-        resp.plan.poses.pop(0)
-
-        for everyWaypoint in resp.plan.poses:
-            self.go_to(everyWaypoint)
-
+            #If centroids exist, repeat the function
+            if len(newCents.centroids) > 0:
+                self.phaseOne()
+        else:
+            rospy.loginfo('phase 1 complete!')
         
     '''
     def phaseTwo(self):
@@ -154,7 +155,7 @@ class Lab4:
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
-        msg.poses.pop(0)
+        #msg.poses.pop(0)
 
         for everyWaypoint in msg.poses:
             #print(everyWaypoint)
@@ -194,27 +195,35 @@ class Lab4:
         #Save the initial x,y pose and orientation
         initX = self.px
         initY  = self.py
-        initYaw = self.omega
+        initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
-        kpOmega = .01    #kp for controller
-        kpDist = .5
+        kpOmega = .5    #kp for controller
+        kiOmega = 0.0001
+        kdOmega = 0.001
+        kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
         end = False     #flag for the robot motion
+        prevError = 0
+        omegaInt = 0
 
         print('SPEEDING UP')
         for x in range(1000):
-            omegaError = initYaw - self.omega
-            self.send_speed(linear_speed*(float(x)/1000),-omegaError * kpOmega)
+            omegaError = 0 - self.omega
+            omegaInt = omegaInt + omegaError
+            omegaDir = omegaError - prevError
+            self.send_speed(linear_speed*(float(x)/1000),kpOmega*omegaError + kiOmega*omegaInt + kdOmega*omegaDir)
+            prevError = omegaError
             start = False
             run = True
         
         
         while(self.calc_distance(initX, self.px, initY, self.py) < distance - THRESH):
             print('Running at speed')
-            omegaError = initYaw - self.omega       #Error for controller
-            errorInt = errorInt + omegaError        #Integral of error used for ki term
-            self.send_speed(linear_speed,-omegaError * kpOmega)
+            omegaError = 0 - self.omega
+            omegaInt = omegaInt + omegaError
+            omegaDir = omegaError - prevError        #Integral of error used for ki term
+            self.send_speed(linear_speed,kpOmega*omegaError + kiOmega*omegaInt + kdOmega*omegaDir)
         
         #Since the robot is within the tolerance, brake
         print('BRAKING')
@@ -277,7 +286,7 @@ class Lab4:
         """
         try:
             ROT = 1
-            SPEED = .2
+            SPEED = .15
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)

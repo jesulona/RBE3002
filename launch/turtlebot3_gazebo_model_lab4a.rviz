@@ -272,8 +272,8 @@ Visualization Manager:
       Scale: 211.7034149169922
       Target Frame: map
       Value: TopDownOrtho (rviz)
-      X: 1.3453428745269775
-      Y: 0.31699880957603455
+      X: 1.0685673952102661
+      Y: 0.24161314964294434
     Saved: ~
 Window Geometry:
   Displays:
@@ -294,4 +294,4 @@ Window Geometry:
     collapsed: true
   Width: 1267
   X: 577
-  Y: 117
+  Y: 57
