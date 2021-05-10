@@ -71,8 +71,9 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        totalWeight = 0
-        
+        totalWeight = -3600
+        distWeight = -1.3
+        sizeWeight = 1
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
             for point in centroidResp.centroids:
@@ -86,7 +87,7 @@ class Lab4:
                 size_of_frontier = point.z
 
                 #add somevariable to weigh the euclidean dist and the size of the frontier
-                currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
+                currTotalWeight = distWeight*euclidean_dist_to_centroid + sizeWeight* size_of_frontier
 
                 if currTotalWeight > totalWeight:
                     print("Im checking")
@@ -100,10 +101,19 @@ class Lab4:
             goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
-        #THIS IS THE MEAT OF THE FUNCTION
+        #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-
+            print(resp.plan)
+            print('split')
             resp.plan.poses.pop(0)
+            if len(resp.plan.poses) > 1:
+                resp.plan.poses.pop(-1)
+                if len(resp.plan.poses) > 1:
+                    resp.plan.poses.pop(-1)
+                    if len(resp.plan.poses) > 1:
+                        resp.plan.poses.pop(-1)
+
+            print(resp.plan)    
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
@@ -199,7 +209,7 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         kpOmega = .5    #kp for controller
         kiOmega = 0.0001
-        kdOmega = 0.001
+        kdOmega = 0.005
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
