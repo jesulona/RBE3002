@@ -198,8 +198,8 @@ class Lab4:
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
         kpOmega = .5    #kp for controller
-        kiOmega = 0
-        kdOmega = 0
+        kiOmega = 0.0001
+        kdOmega = 0.001
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
