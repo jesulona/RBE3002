@@ -293,11 +293,7 @@ class Lab4:
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            #Figure out which way to turn   
-            if angToGoal - self.pth > 0:
-                self.rotate(angToGoal, ROT)
-            else:
-                self.rotate(angToGoal,-ROT)
+            self.rotate(angToGoal, self.turnDirection(angToGoal, self.pth))
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
@@ -310,16 +306,28 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
-            if yaw - self.pth > 0:
-                self.rotate(yaw, ROT)
-            else:
-                self.rotate(yaw,-ROT)
+            self.rotate(angToGoal, self.turnDirection(yaw, self.pth))
         except Exception as e:
             print('Failed on go_to()')
             print(e)
-        
 
+    def turnDirection(self, goal, start):
+        #remember, positive = CCW, neg = CW
+        deltaAng = goal - start
+        ROT = 1
+        if deltaAng < 0:
+            if abs(deltaAng) > 180:
+                return ROT
+            else: 
+                return -ROT
 
+        elif deltaAng > 0:
+            if abs(deltaAng) > 180:
+                return -ROT
+            else:
+                return ROT
+
+                
     def update_odometry(self, msg):
         """
         Updates the current pose of the robot.
