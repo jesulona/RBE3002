@@ -268,7 +268,7 @@ class Frontier:
         :return        [OccupancyGrid] The C-Space.
         """
         try:
-            padding = 3
+            padding = 2
             THRESH = 50                     #Threshold for shading of a cell
             cspaceMap = list(self.map.data)     #Create a copy of existing map to expand obstacles with. Make list so its changeable
             worldCoordinates = []           #Initialize world coordinate list of obstacles
