@@ -434,6 +434,11 @@ class PathPlanner:
         rospy.loginfo("Received path:" + str(path))
         pathMessage = Path()
         pathMessage.poses = self.path_to_poses(mapdata,path)
+
+        length = int(len(pathMessage.poses)/2)
+        del pathMessage.poses[-length:]
+        if len(pathMessage.poses) > 1:
+            pathMessage.poses.pop(-1)
         pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
         self.pubPath.publish(pathMessage)
@@ -488,7 +493,7 @@ class PathPlanner:
         #print(x,y)
         print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
-        return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100))# and (mapdata.data[self.grid_to_index(x,y)] is not -1)
+        return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100)) # and (mapdata.data[self.grid_to_index(x,y)] is not -1)
 
     def grid_to_index(self, x, y):
         """

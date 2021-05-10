@@ -71,8 +71,8 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        totalWeight = -3600
-        distWeight = -1.3
+        totalWeight = -100000
+        distWeight = -3
         sizeWeight = 1
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
@@ -103,17 +103,18 @@ class Lab4:
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-            print(resp.plan)
-            print('split')
+            #print(resp.plan)
+            #print('split')
             resp.plan.poses.pop(0)
+            '''
             if len(resp.plan.poses) > 1:
                 resp.plan.poses.pop(-1)
                 if len(resp.plan.poses) > 1:
                     resp.plan.poses.pop(-1)
                     if len(resp.plan.poses) > 1:
                         resp.plan.poses.pop(-1)
-
-            print(resp.plan)    
+            '''
+            #print(resp.plan)    
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
@@ -125,7 +126,7 @@ class Lab4:
             rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
 
             #If centroids exist, repeat the function
-            if len(newCents.centroids) > 0:
+            if len(newCents.centroids) >= 0:
                 self.phaseOne()
         else:
             rospy.loginfo('phase 1 complete!')
@@ -208,8 +209,8 @@ class Lab4:
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
         kpOmega = .5    #kp for controller
-        kiOmega = 0.0001
-        kdOmega = 0.005
+        kiOmega = 0.0005
+        kdOmega = 0.001
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
@@ -342,7 +343,7 @@ class Lab4:
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
             self.rotate(angToGoal, ROT)
-            rospy.wait(2)
+            rospy.sleep(2)
         except Exception as e:
             print('Failed on go_to()')
             print(e)
