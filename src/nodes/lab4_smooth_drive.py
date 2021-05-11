@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import rospy
+import rospy, os, subprocess
 from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Point, Quaternion
@@ -77,13 +77,9 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        
-        totalWeight = -100000
-        distWeight = -4
-        sizeWeight = .6
-        #distWeight = -3
-        #sizeWeight = 1
-        
+        totalWeight = -3600
+        distWeight = -1.3
+        sizeWeight = 1
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
             for point in centroidResp.centroids:
@@ -151,6 +147,8 @@ class Lab4:
         print ("I will go back to: " + str(startPose))
         
         self.phaseOne()
+
+        mapSaving = subprocess.Popen('rosrun map_server map_saver -f mapWeMade', shell =True)
         
         #Robot's Current Position
         endPose = PoseStamped()
@@ -161,20 +159,27 @@ class Lab4:
         #Request path Planniung Service 
         req = GetPlan()
 
-        path_planner = rospy.ServiceProxy('plan_a_path',GetPlan)
+        path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
 
         resp = path_planner(endPose,startPose,ToleranceVal)
 
-        #self.path_planner.publish(resp.plan)
+        self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
         #msg.poses.pop(0)
 
-        for everyWaypoint in resp.plan.poses:
+        for everyWaypoint in msg.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
     
+        """
+
+        def pickCentroid(self,msg):
+        print(len(msg.cells))
+        print(msg.cells[0])
+
+        """
     
     def executePath(self, msg):
         """
@@ -245,13 +250,11 @@ class Lab4:
         initY  = self.py
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
-        
         kpOmega = .5    #kp for controller
-        kiOmega = 0.0007
-        #kpOmega = .5    #kp for controller
-        #kiOmega = 0.0005
+        #kiOmega = 0.0001
+        #kdOmega = 0.005
+        kiOmega = 0.0005
         kdOmega = 0.001
-      
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
@@ -317,10 +320,9 @@ class Lab4:
                 angle = angle + 2*pi    #if -180--360, set angle to positive angle
 
             #Rotate while the error is less than an error
-            while(abs(angle - self.pth) >= THRESH):
-                print(abs(angle - self.pth))
+            while(abs(angle - self.pth) > THRESH):
                 error = angle - self.pth
-                self.send_speed(0,self.turnDirection(angle, self.pth)*aspeed)
+                self.send_speed(0,aspeed)
             
             print('Done rotating')      #Print to confirm completion
 
@@ -328,30 +330,9 @@ class Lab4:
         except Exception as e:
             print('Failed on rotate')
             print(e)
-
-    def turnDirection(self, goal, start):
-        #remember, positive = CCW, neg = CW
-        deltaAng = goal - start
-        ROT = 1
-        print('robot currently at ' + str((180/pi) * start+90))
-        print('robot needs to go to ' + str((180/pi) * goal+90))
-        if deltaAng <= 0:
-            if abs(deltaAng) >= pi:
-                print('Turning CCW')
-                return ROT
-            else: 
-                print('Turning CW')
-                return -1*ROT
-
-        elif deltaAng > 0:
-            if abs(deltaAng) > pi:
-                print('Turning CW')
-                return -1*ROT
-            else:
-                print('Turning CCW')
-                return ROT
         
-    
+        
+
     def go_to(self, msg):
         """
         Calls rotate(), drive(), and rotate() to attain a given pose.
@@ -359,16 +340,19 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1    #Set in turnDirection Function
-            #SPEED = .15
-            SPEED = .18
+            ROT = 1
+            SPEED = .15
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            self.rotate(angToGoal, ROT)
+            #Figure out which way to turn   
+            if angToGoal - self.pth > 0:
+                self.rotate(angToGoal, ROT)
+            else:
+                self.rotate(angToGoal,-ROT)
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
@@ -381,10 +365,10 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
-
-            self.rotate(angToGoal, ROT)
-            rospy.sleep(1)
-
+            if yaw - self.pth > 0:
+                self.rotate(yaw, ROT)
+            else:
+                self.rotate(yaw,-ROT)
         except Exception as e:
             print('Failed on go_to()')
             print(e)
