@@ -72,8 +72,10 @@ class Lab4:
         
         goalPose = PoseStamped()
         totalWeight = -100000
-        distWeight = -3
-        sizeWeight = 1
+        distWeight = -4
+        sizeWeight = .6
+        #distWeight = -3
+        #sizeWeight = 1
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
             for point in centroidResp.centroids:
@@ -209,7 +211,9 @@ class Lab4:
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
         kpOmega = .5    #kp for controller
-        kiOmega = 0.0005
+        kiOmega = 0.0007
+        #kpOmega = .5    #kp for controller
+        #kiOmega = 0.0005
         kdOmega = 0.001
         kpDist = 0
         errorInt = 0    #Initialize the integral error
@@ -322,7 +326,8 @@ class Lab4:
         """
         try:
             ROT = 1    #Set in turnDirection Function
-            SPEED = .15
+            #SPEED = .15
+            SPEED = .18
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
@@ -343,7 +348,7 @@ class Lab4:
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
             self.rotate(angToGoal, ROT)
-            rospy.sleep(2)
+            rospy.sleep(1)
         except Exception as e:
             print('Failed on go_to()')
             print(e)
