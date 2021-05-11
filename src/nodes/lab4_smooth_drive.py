@@ -82,9 +82,13 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        totalWeight = -3600
-        distWeight = -1.3
-        sizeWeight = 1
+        
+        totalWeight = -100000
+        distWeight = -4
+        sizeWeight = .6
+        #distWeight = -3
+        #sizeWeight = 1
+        
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
             for point in centroidResp.centroids:
@@ -253,11 +257,13 @@ class Lab4:
         initY  = self.py
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
+        
         kpOmega = .5    #kp for controller
-        #kiOmega = 0.0001
-        #kdOmega = 0.005
-        kiOmega = 0.0005
+        kiOmega = 0.0007
+        #kpOmega = .5    #kp for controller
+        #kiOmega = 0.0005
         kdOmega = 0.001
+      
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
@@ -343,8 +349,9 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1
-            SPEED = .15
+            ROT = 1    #Set in turnDirection Function
+            #SPEED = .15
+            SPEED = .18
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
@@ -368,10 +375,10 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
-            if yaw - self.pth > 0:
-                self.rotate(yaw, ROT)
-            else:
-                self.rotate(yaw,-ROT)
+
+            self.rotate(angToGoal, ROT)
+            rospy.sleep(1)
+
         except Exception as e:
             print('Failed on go_to()')
             print(e)
