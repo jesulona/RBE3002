@@ -47,7 +47,7 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
-        self.phaseOne()
+        self.phaseTwo()
 
 
     def phaseOne(self):
@@ -112,12 +112,12 @@ class Lab4:
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-
+            resp.plan.poses.pop(0)
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
 
-            rospy.sleep(.5)
+            #rospy.sleep(.5)
         #Once the robot is at the target centroid
         #Recall the centroid service to see if any exist
             newCents = centroids()
@@ -162,7 +162,7 @@ class Lab4:
         #resp.plan.poses.pop(0)
         #msg.poses.pop(0)
 
-        for everyWaypoint in msg.poses:
+        for everyWaypoint in resp.plan.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
     
@@ -243,17 +243,19 @@ class Lab4:
         initY  = self.py
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
-        kpOmega = .5    #kp for controller
-        #kiOmega = 0.0001
-        #kdOmega = 0.005
-        kiOmega = 0.0005
-        kdOmega = 0.001
+        
+        #Yaw Closed Loop Controller Vals
+        kpOmega = .5    
+        kiOmega = 0.0004
+        kdOmega = 0.000
+        omegaInt = 0
+        omegaDir = 0
+      
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
         end = False     #flag for the robot motion
         prevError = 0
-        omegaInt = 0
 
         #print('SPEEDING UP')
         for x in range(1000):
@@ -274,11 +276,11 @@ class Lab4:
             self.send_speed(linear_speed,kpOmega*omegaError + kiOmega*omegaInt + kdOmega*omegaDir)
         
         #Since the robot is within the tolerance, brake
-        print('BRAKING')
+        #print('BRAKING')
         for u in range(1000):
             self.send_speed(linear_speed*(float(500-u)/1000),0)
         
-        print('Move Completed!')
+        #print('Move Completed!')
         self.send_speed(0,0)
 
     def calc_distance(self,xInit, xFinal, yInit, yFinal):
@@ -314,11 +316,11 @@ class Lab4:
 
             #Rotate while the error is less than an error
             while(abs(angle - self.pth) >= THRESH):
-                print(abs(angle - self.pth))
+                #print(abs(angle - self.pth))
                 error = angle - self.pth
                 self.send_speed(0,self.turnDirection(angle, self.pth)*aspeed)
             
-            print('Done rotating')      #Print to confirm completion
+            #print('Done rotating')      #Print to confirm completion
 
             self.send_speed(0,0)        #Stop the robot motion
         except Exception as e:
@@ -329,22 +331,22 @@ class Lab4:
         #remember, positive = CCW, neg = CW
         deltaAng = goal - start
         ROT = 1
-        print('robot currently at ' + str((180/pi) * start+90))
-        print('robot needs to go to ' + str((180/pi) * goal+90))
+        #print('robot currently at ' + str((180/pi) * start+90))
+        #print('robot needs to go to ' + str((180/pi) * goal+90))
         if deltaAng <= 0:
             if abs(deltaAng) >= pi:
-                print('Turning CCW')
+                #print('Turning CCW')
                 return ROT
             else: 
-                print('Turning CW')
+                #print('Turning CW')
                 return -1*ROT
 
         elif deltaAng > 0:
             if abs(deltaAng) > pi:
-                print('Turning CW')
+                #print('Turning CW')
                 return -1*ROT
             else:
-                print('Turning CCW')
+                #print('Turning CCW')
                 return ROT
         
         
@@ -356,26 +358,23 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1
-            SPEED = .15
+            ROT = 1    #Set in turnDirection Function
+            #SPEED = .15
+            SPEED = .18
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            #Figure out which way to turn   
-            if angToGoal - self.pth > 0:
-                self.rotate(angToGoal, ROT)
-            else:
-                self.rotate(angToGoal,-ROT)
-            rospy.sleep(.5)
+            self.rotate(angToGoal, ROT)
+            rospy.sleep(.0625)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
             rospy.loginfo("Driving " + str(distToGoal) + ' To get to the next goal')
             self.drive(distToGoal, SPEED)
             rospy.loginfo("Im at my goal!")
-            rospy.sleep(.5)
+            rospy.sleep(.0625)
             #3 Once at goal, rotate to desired orientation (rotate)
             quat_orig  = goal.orientation                            
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
@@ -383,7 +382,7 @@ class Lab4:
             #Figure out which way to turn
 
             self.rotate(angToGoal, ROT)
-            rospy.sleep(.5)
+            rospy.sleep(.0625)
 
         except Exception as e:
             print('Failed on go_to()')
@@ -425,7 +424,7 @@ class Lab4:
         pass # delete this when you implement your code
 
     def run(self):
-        print('Running')
+        #print('Running')
         rospy.spin()
 
 if __name__ == '__main__':

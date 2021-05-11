@@ -399,14 +399,15 @@ class PathPlanner:
             #If the cell is equal to 0, keep it
             for p in neighbors:
                 if mapdata.data[self.grid_to_index(p[0], p[1])] == 0:
-                    point = self.grid_to_world(mapdata, zeros[p], zeros[p])
+                    point = self.grid_to_world(mapdata, p[0], p[1])
                     curr.cells.append(point)
 
             #publish your emergency gridcells
             self.pubCurr.publish(curr)
+            newPoint = self.world_to_grid(mapdata, curr.cells[0])
             
             #path plan again from the first entry in the list
-            return self.a_star(mapdata, z[0], goal)
+            return self.a_star(mapdata, newPoint, goal)
 
     
     @staticmethod
@@ -501,7 +502,7 @@ class PathPlanner:
         path  = self.a_star(mapdata, start, goal)
         del path[0] # remove the first path value
         if len(path) > 2:
-            length = int(len(path)/3.3)
+            length = int(len(path)/2.5)
             del path[-length:]
         else:
             print('robot in cspace!')

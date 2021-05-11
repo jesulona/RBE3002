@@ -17,7 +17,6 @@ class Frontier:
         rospy.init_node("frontier")
 
         rospy.Subscriber('/map', OccupancyGrid ,self.updateMap)
-        rospy.sleep(.5)
 
         self.pubCSpace = rospy.Publisher('/path_planning/cspace', GridCells, queue_size=10)     #c space in rviz simulation
         self.pubFrontierLine = rospy.Publisher('frontierLine', GridCells, queue_size=10)        #Frontier in rviz simulation
@@ -269,10 +268,10 @@ class Frontier:
         """
         try:
             padding = 3
-            THRESH = 50                     #Threshold for shading of a cell
-            cspaceMap = list(self.map.data)     #Create a copy of existing map to expand obstacles with. Make list so its changeable
-            worldCoordinates = []           #Initialize world coordinate list of obstacles
-            self.c_space = self.map
+            THRESH = 50                         #Threshold for shading of a cell
+            worldCoordinates = []               #Initialize world coordinate list of obstacles
+            self.c_space = deepcopy(self.map)
+            cspaceMap = list(self.c_space.data)     #Create a copy of existing map to expand obstacles with. Make list so its changeable
             rospy.loginfo("Calculating C-Space")
 
             ## Determine cspace for each layer of padding
@@ -305,12 +304,12 @@ class Frontier:
             msg.header.frame_id = self.map.header.frame_id  #Copy over frame id
             self.pubCSpace.publish(msg)                     #Publish to topic
 
-            occGridCSpace = self.map    #Create new Occupancy Grid Object
+            occGridCSpace = deepcopy(self.c_space)    #Create new Occupancy Grid Object
             occGridCSpace.data = cspaceMap
             self.c_space = occGridCSpace
 
             ## Return the C-space
-            rospy.sleep(.25)
+            #rospy.sleep(.25)
             return occGridCSpace
         except Exception as e:
             print('failed on calc_cspace')
