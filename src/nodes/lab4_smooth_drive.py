@@ -170,23 +170,16 @@ class Lab4:
 
         resp = path_planner(endPose,startPose,ToleranceVal)
 
-        self.pathPublisher.publish(resp.plan)
+        #self.path_planner.publish(resp.plan)
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
         #msg.poses.pop(0)
 
-        for everyWaypoint in msg.poses:
+        for everyWaypoint in resp.plan.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
     
-        """
-
-        def pickCentroid(self,msg):
-        print(len(msg.cells))
-        print(msg.cells[0])
-
-        """
     
     def executePath(self, msg):
         """
@@ -329,9 +322,10 @@ class Lab4:
                 angle = angle + 2*pi    #if -180--360, set angle to positive angle
 
             #Rotate while the error is less than an error
-            while(abs(angle - self.pth) > THRESH):
+            while(abs(angle - self.pth) >= THRESH):
+                print(abs(angle - self.pth))
                 error = angle - self.pth
-                self.send_speed(0,aspeed)
+                self.send_speed(0,self.turnDirection(angle, self.pth)*aspeed)
             
             print('Done rotating')      #Print to confirm completion
 
@@ -339,9 +333,30 @@ class Lab4:
         except Exception as e:
             print('Failed on rotate')
             print(e)
-        
-        
 
+    def turnDirection(self, goal, start):
+        #remember, positive = CCW, neg = CW
+        deltaAng = goal - start
+        ROT = 1
+        print('robot currently at ' + str((180/pi) * start+90))
+        print('robot needs to go to ' + str((180/pi) * goal+90))
+        if deltaAng <= 0:
+            if abs(deltaAng) >= pi:
+                print('Turning CCW')
+                return ROT
+            else: 
+                print('Turning CW')
+                return -1*ROT
+
+        elif deltaAng > 0:
+            if abs(deltaAng) > pi:
+                print('Turning CW')
+                return -1*ROT
+            else:
+                print('Turning CCW')
+                return ROT
+        
+    
     def go_to(self, msg):
         """
         Calls rotate(), drive(), and rotate() to attain a given pose.
@@ -358,11 +373,7 @@ class Lab4:
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            #Figure out which way to turn   
-            if angToGoal - self.pth > 0:
-                self.rotate(angToGoal, ROT)
-            else:
-                self.rotate(angToGoal,-ROT)
+            self.rotate(angToGoal, ROT)
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
