@@ -163,7 +163,7 @@ class Lab4:
         #Request path Planniung Service 
         req = GetPlan()
 
-        path_planner = rospy.ServiceProxy('plan_a_path',GetPlan)
+        path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
 
         resp = path_planner(endPose,startPose,ToleranceVal)
 
