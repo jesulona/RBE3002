@@ -47,14 +47,14 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
-        self.phaseTwo()
+        self.phaseOne()
 
 
     def phaseOne(self):
         '''
         Function automatically searches the map until its full
         and will note starting position to return to PhaseTwo
-        '''      
+        '''
         i = 0
 
         # rospy.wait_for_service('plan_a_path')
@@ -63,7 +63,6 @@ class Lab4:
         TOL = .1
         #Call the frontier service
         #Service returns a list of points representing centroids on the map
-        #centroidReq = frontierList()
         centroids = rospy.ServiceProxy('getFrontiers',frontierList)
         pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
         #Analyze the frontier
@@ -77,9 +76,13 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        totalWeight = -3600
-        distWeight = -1.3
-        sizeWeight = 1
+        
+        totalWeight = -100000
+        distWeight = -9
+        sizeWeight = .6
+        #distWeight = -3
+        #sizeWeight = 1
+        
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
             for point in centroidResp.centroids:
@@ -96,7 +99,7 @@ class Lab4:
                 currTotalWeight = distWeight*euclidean_dist_to_centroid + sizeWeight* size_of_frontier
 
                 if currTotalWeight > totalWeight:
-                    print("Im checking")
+                    #print("Im checking")
                     #set the position in the queue
                     goalPoint = point
 
@@ -109,22 +112,12 @@ class Lab4:
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-            print(resp.plan)
-            print('split')
-            resp.plan.poses.pop(0)
-            if len(resp.plan.poses) > 1:
-                resp.plan.poses.pop(-1)
-                if len(resp.plan.poses) > 1:
-                    resp.plan.poses.pop(-1)
-                    if len(resp.plan.poses) > 1:
-                        resp.plan.poses.pop(-1)
 
-            print(resp.plan)    
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
 
-            rospy.sleep(1)
+            rospy.sleep(.5)
         #Once the robot is at the target centroid
         #Recall the centroid service to see if any exist
             newCents = centroids()
@@ -262,7 +255,7 @@ class Lab4:
         prevError = 0
         omegaInt = 0
 
-        print('SPEEDING UP')
+        #print('SPEEDING UP')
         for x in range(1000):
             omegaError = 0 - self.omega
             omegaInt = omegaInt + omegaError
@@ -320,9 +313,10 @@ class Lab4:
                 angle = angle + 2*pi    #if -180--360, set angle to positive angle
 
             #Rotate while the error is less than an error
-            while(abs(angle - self.pth) > THRESH):
+            while(abs(angle - self.pth) >= THRESH):
+                print(abs(angle - self.pth))
                 error = angle - self.pth
-                self.send_speed(0,aspeed)
+                self.send_speed(0,self.turnDirection(angle, self.pth)*aspeed)
             
             print('Done rotating')      #Print to confirm completion
 
@@ -330,6 +324,28 @@ class Lab4:
         except Exception as e:
             print('Failed on rotate')
             print(e)
+
+    def turnDirection(self, goal, start):
+        #remember, positive = CCW, neg = CW
+        deltaAng = goal - start
+        ROT = 1
+        print('robot currently at ' + str((180/pi) * start+90))
+        print('robot needs to go to ' + str((180/pi) * goal+90))
+        if deltaAng <= 0:
+            if abs(deltaAng) >= pi:
+                print('Turning CCW')
+                return ROT
+            else: 
+                print('Turning CW')
+                return -1*ROT
+
+        elif deltaAng > 0:
+            if abs(deltaAng) > pi:
+                print('Turning CW')
+                return -1*ROT
+            else:
+                print('Turning CCW')
+                return ROT
         
         
 
@@ -365,10 +381,10 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
-            if yaw - self.pth > 0:
-                self.rotate(yaw, ROT)
-            else:
-                self.rotate(yaw,-ROT)
+
+            self.rotate(angToGoal, ROT)
+            rospy.sleep(.5)
+
         except Exception as e:
             print('Failed on go_to()')
             print(e)

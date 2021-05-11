@@ -404,7 +404,7 @@ class PathPlanner:
 
             #publish your emergency gridcells
             self.pubCurr.publish(curr)
-
+            
             #path plan again from the first entry in the list
             return self.a_star(mapdata, z[0], goal)
 
@@ -499,9 +499,9 @@ class PathPlanner:
         goal  = self.world_to_grid(mapdata, msg.goal.pose.position)
         print('goal is ' + str(goal))
         path  = self.a_star(mapdata, start, goal)
-        
+        del path[0] # remove the first path value
         if len(path) > 2:
-            length = int(len(path)/3)
+            length = int(len(path)/3.3)
             del path[-length:]
         else:
             print('robot in cspace!')
@@ -521,7 +521,7 @@ class PathPlanner:
         :return        [boolean]       True if the cell is walkable, False otherwise
         """
         #print(x,y)
-        print(self.isInBounds(x,y))
+        #print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
         return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100)) # and (mapdata.data[self.grid_to_index(x,y)] is not -1)
 
