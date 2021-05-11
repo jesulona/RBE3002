@@ -526,7 +526,7 @@ class PathPlanner:
         path  = self.a_star(mapdata, start, goal)
         del path[0] # remove the first path value
         if len(path) > 2:
-            length = int(len(path)/3.4)
+            length = int(len(path)/3.3)
             del path[-length:]
         else:
             print('robot in cspace!')
