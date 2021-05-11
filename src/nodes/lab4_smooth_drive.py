@@ -47,7 +47,7 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
-        self.phaseTwo()
+        self.phaseOne()
 
 
     def phaseOne(self):
@@ -55,9 +55,6 @@ class Lab4:
         Function automatically searches the map until its full
         and will note starting position to return to PhaseTwo
         '''
-
-        
-       
         #print("Going back to" + str(self.startPose))
 
         i = 0
@@ -68,7 +65,6 @@ class Lab4:
         TOL = .1
         #Call the frontier service
         #Service returns a list of points representing centroids on the map
-        #centroidReq = frontierList()
         centroids = rospy.ServiceProxy('getFrontiers',frontierList)
         pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
         #Analyze the frontier
@@ -84,7 +80,7 @@ class Lab4:
         goalPose = PoseStamped()
         
         totalWeight = -100000
-        distWeight = -4
+        distWeight = -9
         sizeWeight = .6
         #distWeight = -3
         #sizeWeight = 1
@@ -118,17 +114,7 @@ class Lab4:
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-            print(resp.plan)
-            print('split')
-            resp.plan.poses.pop(0)
-            if len(resp.plan.poses) > 1:
-                resp.plan.poses.pop(-1)
-                if len(resp.plan.poses) > 1:
-                    resp.plan.poses.pop(-1)
-                    if len(resp.plan.poses) > 1:
-                        resp.plan.poses.pop(-1)
 
-            print(resp.plan)    
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
