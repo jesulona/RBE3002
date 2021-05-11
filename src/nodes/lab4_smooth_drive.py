@@ -101,7 +101,7 @@ class Lab4:
                 currTotalWeight = distWeight*euclidean_dist_to_centroid + sizeWeight* size_of_frontier
 
                 if currTotalWeight > totalWeight:
-                    print("Im checking")
+                    #print("Im checking")
                     #set the position in the queue
                     goalPoint = point
 
@@ -119,7 +119,7 @@ class Lab4:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
 
-            rospy.sleep(1)
+            rospy.sleep(.5)
         #Once the robot is at the target centroid
         #Recall the centroid service to see if any exist
             newCents = centroids()
@@ -250,7 +250,7 @@ class Lab4:
         prevError = 0
         omegaInt = 0
 
-        print('SPEEDING UP')
+        #print('SPEEDING UP')
         for x in range(1000):
             omegaError = 0 - self.omega
             omegaInt = omegaInt + omegaError
@@ -352,7 +352,7 @@ class Lab4:
         try:
             ROT = 1    #Set in turnDirection Function
             #SPEED = .15
-            SPEED = .18
+            SPEED = .15
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
@@ -374,7 +374,7 @@ class Lab4:
             #Figure out which way to turn
 
             self.rotate(angToGoal, ROT)
-            rospy.sleep(1)
+            rospy.sleep(.5)
 
         except Exception as e:
             print('Failed on go_to()')

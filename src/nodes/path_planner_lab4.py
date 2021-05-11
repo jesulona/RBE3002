@@ -239,7 +239,7 @@ class PathPlanner:
         if (y!=0) and (self.isInBounds(x, y-1)):
             availibleSpaces.append((x,y-1))
 
-        print(availibleSpaces)
+        #print(availibleSpaces)
         return availibleSpaces       
     
 
@@ -285,8 +285,10 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
-        print('goal')
-        print(goal)
+        #print('goal')
+        
+        
+        #print(goal)
         #Raise an error if the goal is out bounds, i.e. the goal is an object or in c-space
         if self.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Goal is Out of Bounds!")
@@ -405,7 +407,7 @@ class PathPlanner:
             print('robot is in cspace!')
             print(start[0], start[1])
             w = self.grid_to_world(mapdata,start[0],start[1])
-            print(type(w))
+            #print(type(w))
             curr = GridCells()
             curr.header.frame_id = 'map'
             curr.cell_height = mapdata.info.resolution
@@ -418,11 +420,11 @@ class PathPlanner:
                 for n in (self.all_neighbors_of_4(mapdata, each[0], each[1])):
                     neigh.append(n)
                     curr.cells.append(Point(n[0],n[1],0))
-            print(len(neigh))
+            #print(len(neigh))
             for each in neigh:
                 if mapdata.data[self.grid_to_index(each[0],each[1])] is not 0:
                     neigh.pop(neigh.index(each))
-            print(len(neigh))
+            #print(len(neigh))
             self.pubCurr.publish(curr)
 
             return list([(100,100),(200,200),(300,300),(100,100),(200,200),(300,300),(100,100),(200,200),(300,300)])
@@ -522,9 +524,9 @@ class PathPlanner:
         goal  = self.world_to_grid(mapdata, msg.goal.pose.position)
         print('goal is ' + str(goal))
         path  = self.a_star(mapdata, start, goal)
-        
+        del path[0] # remove the first path value
         if len(path) > 2:
-            length = int(len(path)/3)
+            length = int(len(path)/3.4)
             del path[-length:]
         else:
             print('robot in cspace!')
@@ -544,7 +546,7 @@ class PathPlanner:
         :return        [boolean]       True if the cell is walkable, False otherwise
         """
         #print(x,y)
-        print(self.isInBounds(x,y))
+        #print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
         return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100)) # and (mapdata.data[self.grid_to_index(x,y)] is not -1)
 
