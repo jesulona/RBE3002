@@ -18,7 +18,7 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
         ## Initialize the node and call it "path_planner"
-        rospy.init_node("path_planner", anonymous = False)
+        rospy.init_node("path_planner_lab3", anonymous = False)
         
         ## Create a new service called "plan_path" that accepts messages of
         ## type GetPlan and calls self.plan_path() when a message is received
@@ -450,14 +450,14 @@ class PathPlanner:
         path.reverse()
         deepcopyofpath = deepcopy(path)
         #print(path)
-
+        '''
         for everyLoc in path:
             xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
             pathCells.cells.append(xyCoordPath)
             pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
             self.pubPath.publish(pathCells)
             rospy.sleep(0.05)      
-
+        '''
         return path
 
     
@@ -514,6 +514,7 @@ class PathPlanner:
         pathMessage.poses = self.path_to_poses(mapdata,path)
         pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
+        self.pubPath.publish(pathMessage)
         return pathMessage
 
 
@@ -546,10 +547,6 @@ class PathPlanner:
         """
         Runs the node until Ctrl-C is pressed.
         """
-        # mapdata = PathPlanner.request_map()
-        # self.calc_cspace(mapdata,1)
-        # self.a_star(mapdata,(1,1),(34,7))
-        newPath = PathPlanner.optimize_path(straightPath)
         rospy.spin()
 
         

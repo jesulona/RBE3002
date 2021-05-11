@@ -41,7 +41,7 @@ class Lab4:
         #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         ### Tell ROS that this node subscribes to PoseStamped messages on the '/move_base_simple/goal' topic, and when a message is received, call self.go_to
-        #rospy.Subscriber('/path_planner/path', Path, self.executePath)
+        self.pathPublisher = rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
@@ -142,6 +142,9 @@ class Lab4:
         self.phaseOne()
 
         mapSaving = subprocess.Popen('rosrun map_server map_saver -f mapWeMade', shell =True)
+        rospy.sleep(.25)
+        mapServierInit = subprocess.Popen('rosrun map_server map_server mapWeMade.yaml', shell =True)
+        rospy.sleep(.25)
         
         #Robot's Current Position
         endPose = PoseStamped()
@@ -151,6 +154,7 @@ class Lab4:
 
         #Request path Planniung Service 
         req = GetPlan()
+        rospy.wait_for_service('/plan_path')
 
         path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
 
@@ -245,9 +249,9 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         
         #Yaw Closed Loop Controller Vals
-        kpOmega = .5    
-        kiOmega = 0.0004
-        kdOmega = 0.000
+        kpOmega = .55    
+        kiOmega = 0.0005
+        kdOmega = 0.001
         omegaInt = 0
         omegaDir = 0
       
@@ -269,7 +273,7 @@ class Lab4:
         
         
         while(self.calc_distance(initX, self.px, initY, self.py) < distance - THRESH):
-            #print('Running at speed')
+            print('Running at speed')
             omegaError = 0 - self.omega
             omegaInt = omegaInt + omegaError
             omegaDir = omegaError - prevError        #Integral of error used for ki term
@@ -306,7 +310,7 @@ class Lab4:
         try:
             #angle = self.pth + angle    #Rotate x degrees relative to the current pos
             initPth = self.pth          #Store the current position
-            THRESH = .1                #Threshold for angle difference [rad]
+            THRESH = .07                #Threshold for angle difference [rad]
             
             #Adjust the angle to determine which side of the x axis it lies on
             if angle > pi:             
@@ -368,13 +372,13 @@ class Lab4:
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
             self.rotate(angToGoal, ROT)
-            rospy.sleep(.0625)
+            rospy.sleep(.25)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)
             rospy.loginfo("Driving " + str(distToGoal) + ' To get to the next goal')
             self.drive(distToGoal, SPEED)
             rospy.loginfo("Im at my goal!")
-            rospy.sleep(.0625)
+            rospy.sleep(.25)
             #3 Once at goal, rotate to desired orientation (rotate)
             quat_orig  = goal.orientation                            
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
@@ -382,7 +386,7 @@ class Lab4:
             #Figure out which way to turn
 
             self.rotate(angToGoal, ROT)
-            rospy.sleep(.0625)
+            rospy.sleep(.25)
 
         except Exception as e:
             print('Failed on go_to()')
