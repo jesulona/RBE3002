@@ -142,11 +142,11 @@ class Lab4:
         self.phaseOne()
 
         mapSaving = subprocess.Popen('rosrun map_server map_saver -f mapWeMade', shell =True)
-        rospy.sleep(.25)
+        rospy.sleep(1)
         mapServierInit = subprocess.Popen('rosrun map_server map_server mapWeMade.yaml', shell =True)
-        rospy.sleep(.25)
+        rospy.sleep(1)
         
-        #Robot's Current Position
+        #Robot's Current Position 
         endPose = PoseStamped()
         endPose.pose.position = Point(self.px,self.py,0)
         quat = quaternion_from_euler(0,0,self.pth)
@@ -160,7 +160,7 @@ class Lab4:
 
         resp = path_planner(endPose,startPose,ToleranceVal)
 
-        self.pathPublisher.publish(resp.plan)
+        #self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
@@ -251,7 +251,7 @@ class Lab4:
         #Yaw Closed Loop Controller Vals
         kpOmega = .55    
         kiOmega = 0.0005
-        kdOmega = 0.001
+        kdOmega = 0.0011
         omegaInt = 0
         omegaDir = 0
       
@@ -310,7 +310,7 @@ class Lab4:
         try:
             #angle = self.pth + angle    #Rotate x degrees relative to the current pos
             initPth = self.pth          #Store the current position
-            THRESH = .07                #Threshold for angle difference [rad]
+            THRESH = .7                #Threshold for angle difference [rad]
             
             #Adjust the angle to determine which side of the x axis it lies on
             if angle > pi:             
