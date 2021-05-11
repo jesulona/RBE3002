@@ -9,7 +9,6 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from priority_queue import PriorityQueue #importing PriorityQueue class to be used
 from copy import deepcopy
 
-straightPath = [[0,1],[1,1],[2,1],[3,1]]
 
 class PathPlanner:
     
@@ -30,7 +29,7 @@ class PathPlanner:
         self.pubCSpace = rospy.Publisher('/path_planner/cspace', GridCells, queue_size = 10)
         self.pubObstacle = rospy.Publisher('/path_planner/obs', GridCells, queue_size = 10)
         self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
-        self.pubPath = rospy.Publisher('/path_planner/path', GridCells, queue_size = 10)
+        self.pubPath = rospy.Publisher('/path_planner/path_home', Path, queue_size = 10)
         ## Create publishers for A* (expanded cells, frontier, ...)
         ## Choose a the topic names, the message type is GridCells
         self.pubAStar = rospy.Publisher('/path_planner/a_star_planning', GridCells, queue_size = 10)
