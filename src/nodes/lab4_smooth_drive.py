@@ -54,11 +54,7 @@ class Lab4:
         '''
         Function automatically searches the map until its full
         and will note starting position to return to PhaseTwo
-        '''
-               
-       
-        #print("Going back to" + str(self.startPose))
-
+        '''      
         i = 0
 
         # rospy.wait_for_service('plan_a_path')
