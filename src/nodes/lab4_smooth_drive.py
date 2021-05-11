@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import rospy
+import rospy, os, subprocess
 from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist, Point, Quaternion
@@ -55,8 +55,6 @@ class Lab4:
         Function automatically searches the map until its full
         and will note starting position to return to PhaseTwo
         '''
-        #print("Going back to" + str(self.startPose))
-
         i = 0
 
         # rospy.wait_for_service('plan_a_path')
@@ -142,6 +140,8 @@ class Lab4:
         print ("I will go back to: " + str(startPose))
         
         self.phaseOne()
+
+        mapSaving = subprocess.Popen('rosrun map_server map_saver -f mapWeMade', shell =True)
         
         #Robot's Current Position
         endPose = PoseStamped()
@@ -152,20 +152,27 @@ class Lab4:
         #Request path Planniung Service 
         req = GetPlan()
 
-        path_planner = rospy.ServiceProxy('plan_a_path',GetPlan)
+        path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
 
         resp = path_planner(endPose,startPose,ToleranceVal)
 
-        #self.path_planner.publish(resp.plan)
+        self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
         #resp.plan.poses.pop(0)
         #msg.poses.pop(0)
 
-        for everyWaypoint in resp.plan.poses:
+        for everyWaypoint in msg.poses:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
     
+        """
+
+        def pickCentroid(self,msg):
+        print(len(msg.cells))
+        print(msg.cells[0])
+
+        """
     
     def executePath(self, msg):
         """
@@ -236,13 +243,11 @@ class Lab4:
         initY  = self.py
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
-        
         kpOmega = .5    #kp for controller
-        kiOmega = 0.0007
-        #kpOmega = .5    #kp for controller
-        #kiOmega = 0.0005
+        #kiOmega = 0.0001
+        #kdOmega = 0.005
+        kiOmega = 0.0005
         kdOmega = 0.001
-      
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
@@ -342,7 +347,8 @@ class Lab4:
                 print('Turning CCW')
                 return ROT
         
-    
+        
+
     def go_to(self, msg):
         """
         Calls rotate(), drive(), and rotate() to attain a given pose.
@@ -350,8 +356,7 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1    #Set in turnDirection Function
-            #SPEED = .15
+            ROT = 1
             SPEED = .15
             goal = msg.pose
             
@@ -359,7 +364,11 @@ class Lab4:
             xDiff = goal.position.x - self.px   #Error in the x direction
             yDiff = goal.position.y - self.py   #Error in the y direction
             angToGoal = atan2(yDiff,xDiff)      #Calculate the angle based on the error
-            self.rotate(angToGoal, ROT)
+            #Figure out which way to turn   
+            if angToGoal - self.pth > 0:
+                self.rotate(angToGoal, ROT)
+            else:
+                self.rotate(angToGoal,-ROT)
             rospy.sleep(.5)
             #2 Calculate Distance between current pose and goal (drive)
             distToGoal = self.calc_distance(self.px, goal.position.x, self.py, goal.position.y)

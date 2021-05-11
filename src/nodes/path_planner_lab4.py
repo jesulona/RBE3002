@@ -212,7 +212,7 @@ class PathPlanner:
 
     def all_neighbors_of_4(self,mapdata, x, y):
         """
-        Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
+        Returns ALL 4-neighbors cells of (x,y) in the occupancy grid.
         :param mapdata [OccupancyGrid] The map information.
         :param x       [int]           The X coordinate in the grid.
         :param y       [int]           The Y coordinate in the grid.
@@ -239,7 +239,6 @@ class PathPlanner:
         if (y!=0) and (self.isInBounds(x, y-1)):
             availibleSpaces.append((x,y-1))
 
-        #print(availibleSpaces)
         return availibleSpaces       
     
 
@@ -283,12 +282,8 @@ class PathPlanner:
         :param goal     [(int, int)]    The goal point (a grid coordinate).
         :return         [[(int, int)]]  The path as a list of tuples (grid coordinates)
         """
-        ### REQUIRED CREDIT
         rospy.loginfo("Executing A* from (%d,%d) to (%d,%d)" % (start[0], start[1], goal[0], goal[1]))
-        #print('goal')
-        
-        
-        #print(goal)
+
         #Raise an error if the goal is out bounds, i.e. the goal is an object or in c-space
         if self.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Goal is Out of Bounds!")
@@ -330,10 +325,6 @@ class PathPlanner:
                 if (topPriority == goal):
                     break
 
-                #generate the 8 neighbors of topPriority
-                #for each neighbor:
-                #print('priority')
-                #print(topPriority[0],topPriority[1])
                 for Neighbor in self.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
                     gVal = cost[topPriority] #add the topPriority to the cost of where you've been
                     #calculate how much it would cost to get to neighbor
@@ -342,22 +333,17 @@ class PathPlanner:
                     totalCost = gVal + hVal
 
                     #turnthe neighbor values into a point format
-                    
                     xyCoord = self.grid_to_world(mapdata,Neighbor[0],Neighbor[1])
                     
-
                     #listofCells.append(xyCoord) 
                     neighbourViz.cells.append(xyCoord)
                     
                     #print(neighbourViz.cells)
                     #print("listofcells" + str(listofCells))
                     #Set cell data to the world coordinates of obstacles
-                    neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
-                    self.pubWaveFront.publish(neighbourViz)                 #Publish to topic
+                    neighbourViz.header.frame_id = mapdata.header.frame_id      #Copy over header
+                    self.pubWaveFront.publish(neighbourViz)                     #Publish to topic
 
-
-                
-                    
                     #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
                     #less than the previous paths in cost list
                     #expand like a spider web
@@ -383,55 +369,44 @@ class PathPlanner:
             path.append(goal)
 
             #print(came_from)
-
-
             while currentPos != start:
                 currentPos = came_from[currentPos] 
                 path.append(currentPos)
 
             path.reverse()
             deepcopyofpath = deepcopy(path)
-            #print(path)
-
-            #Removed to make path object
-            '''
-            for everyLoc in path:
-                xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
-                pathCells.cells.append(xyCoordPath)
-                pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
-                self.pubPath.publish(pathCells)
-                rospy.sleep(0.05)      
-            '''
+            
             return path
+
         except Exception as e:
-            print('robot is in cspace!')
-            print(start[0], start[1])
-            w = self.grid_to_world(mapdata,start[0],start[1])
-            #print(type(w))
+            #Executed in case the robot ends up in cspace
             curr = GridCells()
             curr.header.frame_id = 'map'
             curr.cell_height = mapdata.info.resolution
             curr.cell_width = mapdata.info.resolution
-            curr.cells.append(w)
-            
-            neighbords = self.all_neighbors_of_4(mapdata, start[0], start[0])
-            neigh = neighbords
-            for each in self.all_neighbors_of_4(mapdata, start[0], start[0]):
-                for n in (self.all_neighbors_of_4(mapdata, each[0], each[1])):
-                    neigh.append(n)
-                    curr.cells.append(Point(n[0],n[1],0))
-            #print(len(neigh))
-            for each in neigh:
-                if mapdata.data[self.grid_to_index(each[0],each[1])] is not 0:
-                    neigh.pop(neigh.index(each))
-            #print(len(neigh))
-            self.pubCurr.publish(curr)
 
-            return list([(100,100),(200,200),(300,300),(100,100),(200,200),(300,300),(100,100),(200,200),(300,300)])
-            #print(e)
-            #n = self.neighbors_of_8(mapdata, start[0], start[0])
-            #print(len(n))
-            #return [100,100]
+            neighbors = []
+            #Search throguh the neighbors 3 times for ALL cells
+            for each in self.all_neighbors_of_4(mapdata, start[0], start[1]):
+                neighbors.append(each)
+                for n in (self.all_neighbors_of_4(mapdata, each[0], each[1])):
+                    neighbors.append(n)
+                    for q in (self.all_neighbors_of_4(mapdata, n[0], n[1])):
+                        neighbors.append(q)
+                        for s in (self.all_neighbors_of_4(mapdata, q[0], q[1])):
+                            neighbors.append(s)
+            z = []
+            #If the cell is equal to 0, keep it
+            for p in neighbors:
+                if mapdata.data[self.grid_to_index(p[0], p[1])] == 0:
+                    point = self.grid_to_world(mapdata, zeros[p], zeros[p])
+                    curr.cells.append(point)
+
+            #publish your emergency gridcells
+            self.pubCurr.publish(curr)
+            
+            #path plan again from the first entry in the list
+            return self.a_star(mapdata, z[0], goal)
 
     
     @staticmethod
