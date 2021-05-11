@@ -32,6 +32,11 @@ class Lab4:
         ### Tell ROS that this node subscribes to Odometry messages on the '/odom' topic, when a message is received, call self.update_odom
         rospy.Subscriber('/odom', Odometry, self.update_odometry)
 
+        self.startPose = PoseStamped()
+        self.startPose.pose.position = Point(self.px, self.py, 0)
+        self.quatStart = quaternion_from_euler(0,0,self.pth)
+        self.startPose.pose.orientation = Quaternion(self.quatStart[0], self.quatStart[1], self.quatStart[2], self.quatStart[3])
+
         ### Tell ROS that this node subscribes to Path messages on the '/path_planner/path' topic, and when a message is received, call self.execute_path
         #rospy.Subscriber('/path_planner/path', Path, self.executePath)
 
@@ -42,13 +47,19 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
-        self.phaseOne()
+        self.phaseTwo()
 
 
     def phaseOne(self):
         '''
         Function automatically searches the map until its full
+        and will note starting position to return to PhaseTwo
         '''
+
+        
+       
+        #print("Going back to" + str(self.startPose))
+
         i = 0
 
         # rospy.wait_for_service('plan_a_path')
@@ -71,7 +82,12 @@ class Lab4:
         currPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         
         goalPose = PoseStamped()
-        totalWeight = 0
+        
+        totalWeight = -100000
+        distWeight = -4
+        sizeWeight = .6
+        #distWeight = -3
+        #sizeWeight = 1
         
         if len(centroidResp.centroids) is not 0:
             #search through every point in the centriods function
@@ -86,7 +102,7 @@ class Lab4:
                 size_of_frontier = point.z
 
                 #add somevariable to weigh the euclidean dist and the size of the frontier
-                currTotalWeight = 1.2*euclidean_dist_to_centroid + size_of_frontier
+                currTotalWeight = distWeight*euclidean_dist_to_centroid + sizeWeight* size_of_frontier
 
                 if currTotalWeight > totalWeight:
                     print("Im checking")
@@ -100,10 +116,19 @@ class Lab4:
             goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
-        #THIS IS THE MEAT OF THE FUNCTION
+        #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-
+            print(resp.plan)
+            print('split')
             resp.plan.poses.pop(0)
+            if len(resp.plan.poses) > 1:
+                resp.plan.poses.pop(-1)
+                if len(resp.plan.poses) > 1:
+                    resp.plan.poses.pop(-1)
+                    if len(resp.plan.poses) > 1:
+                        resp.plan.poses.pop(-1)
+
+            print(resp.plan)    
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
@@ -120,14 +145,42 @@ class Lab4:
         else:
             rospy.loginfo('phase 1 complete!')
         
-    '''
+    
     def phaseTwo(self):
-        #idk what well do here
 
-    def pickCentroid(self,msg):
-        print(len(msg.cells))
-        print(msg.cells[0])
-    '''
+        ToleranceVal = 0.1
+        startPose = PoseStamped()
+        startPose.pose.position = Point(self.px, self.py, 0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        startPose.pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
+        print ("I will go back to: " + str(startPose))
+        
+        self.phaseOne()
+        
+        #Robot's Current Position
+        endPose = PoseStamped()
+        endPose.pose.position = Point(self.px,self.py,0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        endPose.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+
+        #Request path Planniung Service 
+        req = GetPlan()
+
+        path_planner = rospy.ServiceProxy('plan_a_path',GetPlan)
+
+        resp = path_planner(endPose,startPose,ToleranceVal)
+
+        #self.path_planner.publish(resp.plan)
+        
+        #Extract Waypoints - start position??
+        #resp.plan.poses.pop(0)
+        #msg.poses.pop(0)
+
+        for everyWaypoint in resp.plan.poses:
+            #print(everyWaypoint)
+            self.go_to(everyWaypoint)
+    
+    
     def executePath(self, msg):
         """
         Takes in a Path message as the goal
@@ -197,9 +250,13 @@ class Lab4:
         initY  = self.py
         initYaw = 0
         THRESH = .07    #Tolerance for distance measurement [m]
+        
         kpOmega = .5    #kp for controller
-        kiOmega = 0.0001
+        kiOmega = 0.0007
+        #kpOmega = .5    #kp for controller
+        #kiOmega = 0.0005
         kdOmega = 0.001
+      
         kpDist = 0
         errorInt = 0    #Initialize the integral error
         start = True    #Flag for the robot motion
@@ -226,11 +283,11 @@ class Lab4:
             self.send_speed(linear_speed,kpOmega*omegaError + kiOmega*omegaInt + kdOmega*omegaDir)
         
         #Since the robot is within the tolerance, brake
-        #print('BRAKING')
+        print('BRAKING')
         for u in range(1000):
             self.send_speed(linear_speed*(float(500-u)/1000),0)
         
-        #print('Move Completed!')
+        print('Move Completed!')
         self.send_speed(0,0)
 
     def calc_distance(self,xInit, xFinal, yInit, yFinal):
@@ -259,12 +316,10 @@ class Lab4:
             THRESH = .1                #Threshold for angle difference [rad]
             
             #Adjust the angle to determine which side of the x axis it lies on
-            if angle >  pi:             
-                angle = angle - 2*pi    #if 180-360, set angle to a negative angle
+            if angle > pi:             
+                angle = angvle - 2*pi    #if 180-360, set angle to a negative angle
             elif angle < -pi:
                 angle = angle + 2*pi    #if -180--360, set angle to positive angle
-
-
 
             #Rotate while the error is less than an error
             while(abs(angle - self.pth) >= THRESH):
@@ -278,7 +333,6 @@ class Lab4:
         except Exception as e:
             print('Failed on rotate')
             print(e)
-    
 
     def turnDirection(self, goal, start):
         #remember, positive = CCW, neg = CW
@@ -301,8 +355,8 @@ class Lab4:
             else:
                 print('Turning CCW')
                 return ROT
-
         
+    
     def go_to(self, msg):
         """
         Calls rotate(), drive(), and rotate() to attain a given pose.
@@ -311,7 +365,8 @@ class Lab4:
         """
         try:
             ROT = 1    #Set in turnDirection Function
-            SPEED = .15
+            #SPEED = .15
+            SPEED = .18
             goal = msg.pose
             
             #1 Calculate Angle between current pose and goal (rotate)
@@ -331,14 +386,16 @@ class Lab4:
             quat_list = [quat_orig.x, quat_orig.y, quat_orig.z, quat_orig.w]
             (roll, pitch, yaw) = euler_from_quaternion(quat_list)
             #Figure out which way to turn
+
             self.rotate(angToGoal, ROT)
-            rospy.wait(2)
+            rospy.sleep(1)
+
         except Exception as e:
             print('Failed on go_to()')
             print(e)
+        
 
-    
-                
+
     def update_odometry(self, msg):
         """
         Updates the current pose of the robot.
