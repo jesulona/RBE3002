@@ -28,6 +28,8 @@ class PathPlanner:
 
         #A Star Publishers
         self.pubWaveFront = rospy.Publisher('/path_planner/wave', GridCells, queue_size = 10)
+
+        self.pubCurr = rospy.Publisher('curr', GridCells, queue_size=10)
         
         
         ## Sleep to allow roscore to do some housekeeping
@@ -181,45 +183,64 @@ class PathPlanner:
         :param y       [int]           The Y coordinate in the grid.
         :return        [[(int,int)]]   A list of walkable 4-neighbors.
         """
-        ### REQUIRED CREDIT
-        
-        #if the input values are greater than the mapdata, or less than 0, then
-        # an exception is thrown
         if (x<0 or x> mapdata.info.width-1 or y<0 or y>mapdata.info.height-1):
             raise ValueError("Out of Bounds!")
-
+        
         availibleSpaces = []
 
         #If x is not the value next to the boarder
         if (x!=mapdata.info.width-1):
-            #Check is cell is walkable
             if (self.is_cell_walkable(mapdata, x+1, y)):
-                #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x+1,y))
 
         #If the x val is not the 0 boundary
         if (x!=0):
-            #Check is cell is walkable
             if(self.is_cell_walkable(mapdata, x-1, y)):
-                #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x-1,y))
         
         #If y is not the value next to the boarder
         if (y!=mapdata.info.height-1):
-            #Check is cell is walkable
             if (self.is_cell_walkable(mapdata, x, y+1)):
-                #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y+1))
 
         #If the y val is not the 0 boundary
         if (y!=0):
-            #Check is cell is walkable
             if(self.is_cell_walkable(mapdata, x, y-1)):
-                #If cell can be reached, add it to the list of avaible spaces
                 availibleSpaces.append((x,y-1))
 
         return availibleSpaces
+
+    def all_neighbors_of_4(self,mapdata, x, y):
+        """
+        Returns the walkable 4-neighbors cells of (x,y) in the occupancy grid.
+        :param mapdata [OccupancyGrid] The map information.
+        :param x       [int]           The X coordinate in the grid.
+        :param y       [int]           The Y coordinate in the grid.
+        :return        [[(int,int)]]   A list of walkable 4-neighbors.
+        """
+        if (x<0 or x> mapdata.info.width-1 or y<0 or y>mapdata.info.height-1):
+            raise ValueError("Out of Bounds!")
         
+        availibleSpaces = []
+
+        #If x is not the value next to the boarder
+        if (x!=mapdata.info.width-1) and (self.isInBounds(x+1, y)):
+            availibleSpaces.append((x+1,y))
+
+        #If the x val is not the 0 boundary
+        if (x!=0) and (self.isInBounds(x-1, y)):
+            availibleSpaces.append((x-1,y))
+        
+        #If y is not the value next to the boarder
+        if (y!=mapdata.info.height-1) and (self.isInBounds(x, y+1)):
+            availibleSpaces.append((x,y+1))
+
+        #If the y val is not the 0 boundary
+        if (y!=0) and (self.isInBounds(x, y-1)):
+            availibleSpaces.append((x,y-1))
+
+        print(availibleSpaces)
+        return availibleSpaces       
     
 
     def neighbors_of_8(self,mapdata, x, y):
@@ -274,111 +295,141 @@ class PathPlanner:
         if self.is_cell_walkable(mapdata, goal[0],goal[1]) is False:
             raise ValueError("Start is Out of Bounds!")
         
-        #creating a frontier to use the priority queue class to follow the sudo code
-        mapFrontier = PriorityQueue()
-        #place start position at the start of the point given
-        mapFrontier.put(start,0)
+        try:
+            #creating a frontier to use the priority queue class to follow the sudo code
+            mapFrontier = PriorityQueue()
+            #place start position at the start of the point given
+            mapFrontier.put(start,0)
 
-        #Initialize a came_from dict
-        came_from = {}
-        came_from[start] = None
-        #Initialize a cost
-        cost= {}
-        cost[start] =0 
+            #Initialize a came_from dict
+            came_from = {}
+            came_from[start] = None
+            #Initialize a cost
+            cost= {}
+            cost[start] =0 
 
-        ## Create a GridCells message for visited cells
-        neighbourViz = GridCells()                           #Create GridCells Object
-        neighbourViz.cell_height = mapdata.info.resolution   #dims are equal to map resolution
-        neighbourViz.cell_width = mapdata.info.resolution
-        listofCells = list(neighbourViz.cells)
-        
-        ## Create a GridCells message for path cells
-        pathCells = GridCells()                           #Create GridCells Object
-        pathCells.cell_height = mapdata.info.resolution   #dims are equal to map resolution
-        pathCells.cell_width = mapdata.info.resolution
-        listOfPathCells = list(pathCells.cells)
+            ## Create a GridCells message for visited cells
+            neighbourViz = GridCells()                           #Create GridCells Object
+            neighbourViz.cell_height = mapdata.info.resolution   #dims are equal to map resolution
+            neighbourViz.cell_width = mapdata.info.resolution
+            listofCells = list(neighbourViz.cells)
+            
+            ## Create a GridCells message for path cells
+            pathCells = GridCells()                           #Create GridCells Object
+            pathCells.cell_height = mapdata.info.resolution   #dims are equal to map resolution
+            pathCells.cell_width = mapdata.info.resolution
+            listOfPathCells = list(pathCells.cells)
 
-        while (mapFrontier.empty() is False):
-            #Get the top Priority from the frontier
-            topPriority = mapFrontier.get()
+            while (mapFrontier.empty() is False):
+                #Get the top Priority from the frontier
+                topPriority = mapFrontier.get()
 
-            #if neighbor is goal, stop search 
-            if (topPriority == goal):
-                break
+                #if neighbor is goal, stop search 
+                if (topPriority == goal):
+                    break
 
-            #generate the 8 neighbors of topPriority
-            #for each neighbor:
-            #print('priority')
-            #print(topPriority[0],topPriority[1])
-            for Neighbor in self.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
-                gVal = cost[topPriority] #add the topPriority to the cost of where you've been
-                #calculate how much it would cost to get to neighbor
-                hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
-                #calculate new total cost
-                totalCost = gVal + hVal
+                #generate the 8 neighbors of topPriority
+                #for each neighbor:
+                #print('priority')
+                #print(topPriority[0],topPriority[1])
+                for Neighbor in self.neighbors_of_8(mapdata, topPriority[0], topPriority[1]):
+                    gVal = cost[topPriority] #add the topPriority to the cost of where you've been
+                    #calculate how much it would cost to get to neighbor
+                    hVal = PathPlanner.euclidean_distance(topPriority[0],topPriority[1],Neighbor[0],Neighbor[1])
+                    #calculate new total cost
+                    totalCost = gVal + hVal
 
-                #turnthe neighbor values into a point format
+                    #turnthe neighbor values into a point format
+                    
+                    xyCoord = self.grid_to_world(mapdata,Neighbor[0],Neighbor[1])
+                    
+
+                    #listofCells.append(xyCoord) 
+                    neighbourViz.cells.append(xyCoord)
+                    
+                    #print(neighbourViz.cells)
+                    #print("listofcells" + str(listofCells))
+                    #Set cell data to the world coordinates of obstacles
+                    neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
+                    self.pubWaveFront.publish(neighbourViz)                 #Publish to topic
+
+
                 
-                xyCoord = self.grid_to_world(mapdata,Neighbor[0],Neighbor[1])
-                
+                    
+                    #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
+                    #less than the previous paths in cost list
+                    #expand like a spider web
+                    if Neighbor not in cost or totalCost < cost[Neighbor]:
+                        #set the current neighbor to the totalCost
+                        cost[Neighbor] = totalCost
+                        #recalculate the hVal
+                        hVal = PathPlanner.euclidean_distance(Neighbor[0],Neighbor[1],goal[0],goal[1])
+                        #recalulate the total cost as a new variable to not override the previous
+                        priority = totalCost + hVal
+                        #put the neighbor into the priority list based on the new totalCost, aka it's priority
+                        mapFrontier.put(Neighbor, priority)
+                        #add the node ot the came_from
+                        #came_from.update({Neighbour : topPriority})
+                        came_from[Neighbor] = topPriority
 
-                #listofCells.append(xyCoord) 
-                neighbourViz.cells.append(xyCoord)
-                
-                #print(neighbourViz.cells)
-                #print("listofcells" + str(listofCells))
-                #Set cell data to the world coordinates of obstacles
-                neighbourViz.header.frame_id = mapdata.header.frame_id               #Copy over header
-                self.pubWaveFront.publish(neighbourViz)                 #Publish to topic
+            #starting at the goal, making that your current position
+            currentPos = goal
 
+            #make a list for the path
+            path = []
+            #add the start to your path
+            path.append(goal)
 
-               
-                
-                #if the neighbor is not currently in the path travelled, or the total cost of this neighbor
-                #less than the previous paths in cost list
-                #expand like a spider web
-                if Neighbor not in cost or totalCost < cost[Neighbor]:
-                    #set the current neighbor to the totalCost
-                    cost[Neighbor] = totalCost
-                    #recalculate the hVal
-                    hVal = PathPlanner.euclidean_distance(Neighbor[0],Neighbor[1],goal[0],goal[1])
-                    #recalulate the total cost as a new variable to not override the previous
-                    priority = totalCost + hVal
-                    #put the neighbor into the priority list based on the new totalCost, aka it's priority
-                    mapFrontier.put(Neighbor, priority)
-                    #add the node ot the came_from
-                    #came_from.update({Neighbour : topPriority})
-                    came_from[Neighbor] = topPriority
-
-        #starting at the goal, making that your current position
-        currentPos = goal
-
-        #make a list for the path
-        path = []
-        #add the start to your path
-        path.append(goal)
-
-        #print(came_from)
+            #print(came_from)
 
 
-        while currentPos != start:
-            currentPos = came_from[currentPos] 
-            path.append(currentPos)
+            while currentPos != start:
+                currentPos = came_from[currentPos] 
+                path.append(currentPos)
 
-        path.reverse()
-        deepcopyofpath = deepcopy(path)
-        #print(path)
+            path.reverse()
+            deepcopyofpath = deepcopy(path)
+            #print(path)
 
-        #Removed to make path object
-        '''
-        for everyLoc in path:
-            xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
-            pathCells.cells.append(xyCoordPath)
-            pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
-            self.pubPath.publish(pathCells)
-            rospy.sleep(0.05)      
-        '''
-        return path
+            #Removed to make path object
+            '''
+            for everyLoc in path:
+                xyCoordPath = self.grid_to_world(mapdata,everyLoc[0],everyLoc[1])
+                pathCells.cells.append(xyCoordPath)
+                pathCells.header.frame_id = mapdata.header.frame_id               #Copy over header
+                self.pubPath.publish(pathCells)
+                rospy.sleep(0.05)      
+            '''
+            return path
+        except Exception as e:
+            print('robot is in cspace!')
+            print(start[0], start[1])
+            w = self.grid_to_world(mapdata,start[0],start[1])
+            print(type(w))
+            curr = GridCells()
+            curr.header.frame_id = 'map'
+            curr.cell_height = mapdata.info.resolution
+            curr.cell_width = mapdata.info.resolution
+            curr.cells.append(w)
+            
+            neighbords = self.all_neighbors_of_4(mapdata, start[0], start[0])
+            neigh = neighbords
+            for each in self.all_neighbors_of_4(mapdata, start[0], start[0]):
+                for n in (self.all_neighbors_of_4(mapdata, each[0], each[1])):
+                    neigh.append(n)
+                    curr.cells.append(Point(n[0],n[1],0))
+            print(len(neigh))
+            for each in neigh:
+                if mapdata.data[self.grid_to_index(each[0],each[1])] is not 0:
+                    neigh.pop(neigh.index(each))
+            print(len(neigh))
+            self.pubCurr.publish(curr)
+
+            return list([(100,100),(200,200),(300,300),(100,100),(200,200),(300,300),(100,100),(200,200),(300,300)])
+            #print(e)
+            #n = self.neighbors_of_8(mapdata, start[0], start[0])
+            #print(len(n))
+            #return [100,100]
 
     
     @staticmethod
@@ -419,8 +470,8 @@ class PathPlanner:
             #if the path is moving at a neg y direction
             if (path[location][0] == (path[location+1][0]) and path[location][0] == (path[location+2][0])) and (path[location][1] == (path[location+1][1]+1) and path[location][1] == (path[location+2][1]+2)):
                 optimizedPath.remove(path[location+1])
-        print(path)
-        print(optimizedPath)
+        #print(path)
+        #print(optimizedPath)
         return optimizedPath
 
 
@@ -435,10 +486,6 @@ class PathPlanner:
         pathMessage = Path()
         pathMessage.poses = self.path_to_poses(mapdata,path)
 
-        length = int(len(pathMessage.poses)/2)
-        del pathMessage.poses[-length:]
-        if len(pathMessage.poses) > 1:
-            pathMessage.poses.pop(-1)
         pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
         self.pubPath.publish(pathMessage)
@@ -475,6 +522,12 @@ class PathPlanner:
         goal  = self.world_to_grid(mapdata, msg.goal.pose.position)
         print('goal is ' + str(goal))
         path  = self.a_star(mapdata, start, goal)
+        
+        if len(path) > 2:
+            length = int(len(path)/3)
+            del path[-length:]
+        else:
+            print('robot in cspace!')
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
@@ -494,6 +547,7 @@ class PathPlanner:
         print(self.isInBounds(x,y))
         #print(mapdata.data[self.grid_to_index(x,y)])
         return self.isInBounds(x,y) and ((mapdata.data[self.grid_to_index(x,y)] is not 100)) # and (mapdata.data[self.grid_to_index(x,y)] is not -1)
+
 
     def grid_to_index(self, x, y):
         """
