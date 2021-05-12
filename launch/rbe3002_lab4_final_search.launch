@@ -38,8 +38,17 @@
   <!--Launch RViz with custom config file used for lab4-->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002_lab3)/launch/turtlebot3_gazebo_model_lab4a.rviz"/>
 
-  <!--Launch Path Planner Node for lab 4-->
-  <!--<node name='path_planner' pkg='rbe3002_lab3' type='path_planner_lab4.py'/>-->
+  <!--Launch C-Space Planner Node for lab 4-->
+  <node name='frontier_cspace' pkg='rbe3002_lab3' type='frontier_cspace.py'/>
+ 
+   <!--Launch Path Planner Node for lab 4-->
+  <node name='path_planner_lab4_search' pkg='rbe3002_lab3' type='path_planner_lab4_search.py'/>
+
+  <!--Launch Path Planner Node for going home-->
+  <node name='path_planner' pkg='rbe3002_lab3' type='path_planner.py'/>
+
+  <!--Launch Smooth drive for a smooth ride -->
+  <node name='lab4_smooth_drive_search' pkg='rbe3002_lab3' type='lab4_smooth_drive_search.py'/>
 
   <!--TODO: Launch motion node and any other required ones-->
   <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
