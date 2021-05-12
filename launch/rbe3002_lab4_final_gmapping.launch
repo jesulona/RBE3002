@@ -1,0 +1,7 @@
+<launch>
+    <!--gmapping. We don't need mapserver if gmapping is running -->
+    <!--NOTE: Set opeb_rviz config to false to use our config file -->
+    <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch" >
+        <arg name='open_rviz' value='False'/>
+    </include>
+</launch>

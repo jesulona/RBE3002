@@ -1,0 +1,4 @@
+<launch>
+    <!-- AMCL -->
+    <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+</launch>
