@@ -45,7 +45,7 @@ class Lab4:
 
         subMove = rospy.Subscriber('/move_base_simple/goal',PoseStamped,self.go_to)
 
-        rospy.sleep(.25) #Pause to let roscore recognize everything
+        rospy.sleep(5) #Pause to let roscore recognize everything
 
         self.phaseTwo()
 
@@ -242,7 +242,7 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         
         #Yaw Closed Loop Controller Vals
-        kpOmega = .4
+        kpOmega = .45
         kiOmega = 0.0006
         kdOmega = 0.001
         omegaInt = 0

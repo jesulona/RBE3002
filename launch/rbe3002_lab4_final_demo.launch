@@ -23,7 +23,7 @@
 	</group>
 
 	<!--Run the Map Server-->
-  	<node name = "map_server" pkg = "map_server" type = "map_server" args ="$(find rbe3002_lab3)/src/nodes/mymap.yaml"/>
+  	<node name = "map_server" pkg = "map_server" type = "map_server" args ="$(find rbe3002_lab3)/src/nodes/mapWeMade.yaml"/>
 
 	<include file="$(find turtlebot3_navigation)/launch/amcl.launch">
 		<arg name="initial_pose_x" value="$(arg x_pos)"/>
@@ -31,7 +31,6 @@
   	</include>
 
 	<!--<param name="robot_description" command="$(find xacro)/xacro.py $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
-
 	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model turtlebot3_burger -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />-->
 
 

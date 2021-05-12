@@ -70,7 +70,7 @@ class Lab4:
         path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
         resp = path_planner(PSstart,msg,ToleranceVal)
 
-        self.pathPublisher.publish(resp.plan)
+        #self.pathPublisher.publish(resp.plan)
         
         #Extract Waypoints - start position??
         resp.plan.poses.pop(0)

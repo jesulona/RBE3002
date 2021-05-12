@@ -463,7 +463,7 @@ class PathPlanner:
         rospy.loginfo("Received path:" + str(path))
         pathMessage = Path()
         pathMessage.poses = self.path_to_poses(mapdata,path)
-
+        pathMessage.poses.pop(0)
         pathMessage.header.frame_id = mapdata.header.frame_id
         rospy.loginfo("Returning a Path message")
         self.pubPath.publish(pathMessage)
@@ -501,9 +501,8 @@ class PathPlanner:
         print('goal is ' + str(goal))
         path  = self.a_star(mapdata, start, goal)
         if len(path) > 2:
-            length = int(len(path)/2.5)
+            length = int(len(path)/3)
             del path[-length:]
-        path.pop(0)
         print('robot in cspace!')
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
