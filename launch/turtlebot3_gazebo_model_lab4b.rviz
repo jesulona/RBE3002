@@ -35,7 +35,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -111,26 +111,10 @@ Visualization Manager:
       Value: true
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_footprint:
-          Value: true
-        base_link:
-          Value: true
-        base_scan:
-          Value: true
-        caster_back_link:
-          Value: true
-        imu_link:
-          Value: true
-        odom:
-          Value: true
-        wheel_left_link:
-          Value: true
-        wheel_right_link:
-          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -139,7 +123,7 @@ Visualization Manager:
       Tree:
         {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 0.5
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -320,11 +304,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 261.5306396484375
+      Scale: 230.14695739746094
       Target Frame: map
       Value: TopDownOrtho (rviz)
-      X: -2.000739336013794
-      Y: 0.22986452281475067
+      X: -2.138812303543091
+      Y: -0.28643298149108887
     Saved: ~
 Window Geometry:
   Displays:
