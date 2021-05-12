@@ -48,6 +48,7 @@ class Lab4:
 
         rospy.sleep(.25) #Pause to let roscore recognize everything
 
+
     
     def executePath(self, msg):
         """
@@ -55,7 +56,7 @@ class Lab4:
         records start location and requests plan from path planner
         obtains plan and executes all posedStamped waypoints
         """
-        ToleranceVal = 0.1
+        TOL = 0.1
 
         rospy.wait_for_service('plan_path')
 
@@ -68,7 +69,7 @@ class Lab4:
         #Request path Planniung Service 
         req = GetPlan()
         path_planner = rospy.ServiceProxy('/plan_path',GetPlan)
-        resp = path_planner(PSstart,msg,ToleranceVal)
+        resp = path_planner(PSstart,msg,TOL)
 
         #self.pathPublisher.publish(resp.plan)
         
@@ -79,6 +80,20 @@ class Lab4:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
 
+        #Go Back to the starting position
+
+        currPose = PoseStamped()
+        currPose.pose.position = Point(self.px, self.py,0)
+        quat = quaternion_from_euler(0,0,self.pth)
+        currPose.pose.orientation = Quaternion(quat[0],quat[1],quat[2],quat[3])
+
+        pathHome = rospy.ServiceProxy('/plan_path', GetPlan)
+        trip = pathHome(currPose, PSstart, TOL)
+
+        for each in trip.plan.poses:
+            self.go_to(each)
+        
+        rospy.loginfo('All Done!')
 
 
     def send_speed(self, linear_speed, angular_speed):

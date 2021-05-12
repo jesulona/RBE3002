@@ -18,7 +18,7 @@ class PathPlanner:
         """
         ### REQUIRED CREDIT
         ## Initialize the node and call it "path_planner"
-        rospy.init_node("path_planner_lab3", anonymous = False)
+        rospy.init_node("path_planner_lab4", anonymous = False)
         
         ## Create a new service called "plan_path" that accepts messages of
         ## type GetPlan and calls self.plan_path() when a message is received

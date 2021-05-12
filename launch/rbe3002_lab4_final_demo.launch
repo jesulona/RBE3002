@@ -45,4 +45,8 @@
   <!--Launch RViz with custom config file used for lab3-->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002_lab3)/launch/turtlebot3_gazebo_model_lab4b.rviz"/>
 
+  <!--Init nodes-->
+  <node name='lab4' pkg='rbe3002_lab3' type='lab4_smooth_drive_demo.py'/>
+  <node name='path_planner_lab4' pkg='rbe3002_lab3' type='path_planner_lab4_demo.py'/>
+
 </launch>

@@ -6,15 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /LaserScan1
-        - /Map1
-        - /CSpace1
-        - /Frontier GridCells1
-        - /Centroids1
-        - /Wavefront1
-        - /Path1
-        - /Goal1
-        - /Current Error Point1
-        - /Path Home1
+        - /Cspace1
       Splitter Ratio: 0.594406008720398
     Tree Height: 630
   - Class: rviz/Selection
@@ -176,73 +168,12 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
-    - Alpha: 0.125
-      Class: rviz/GridCells
-      Color: 25; 255; 0
-      Enabled: true
-      Name: CSpace
-      Topic: /path_planning/cspace
-      Value: true
-    - Alpha: 0.25
-      Class: rviz/GridCells
-      Color: 239; 41; 41
-      Enabled: true
-      Name: Frontier GridCells
-      Topic: frontierLine
-      Value: true
-    - Alpha: 1
-      Class: rviz/GridCells
-      Color: 230; 0; 250
-      Enabled: true
-      Name: Centroids
-      Topic: /centroid/point
-      Value: true
     - Alpha: 0.03125
       Class: rviz/GridCells
       Color: 230; 0; 250
       Enabled: true
       Name: Wavefront
       Topic: /path_planner/wave
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 239; 41; 41
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /path_planner/path
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: Goal
-      Radius: 0.07500000298023224
-      Topic: /centroidGoal
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/GridCells
-      Color: 25; 255; 0
-      Enabled: true
-      Name: Current Error Point
-      Topic: /curr
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -266,6 +197,13 @@ Visualization Manager:
       Shaft Length: 0.10000000149011612
       Topic: /path_planner/path_home
       Unreliable: false
+      Value: true
+    - Alpha: 0.125
+      Class: rviz/GridCells
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Cspace
+      Topic: /path_planner/cspace
       Value: true
   Enabled: true
   Global Options:
@@ -294,7 +232,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.6107960939407349
+      Angle: -1.575796127319336
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -304,11 +242,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 230.14695739746094
+      Scale: 141.6961669921875
       Target Frame: map
       Value: TopDownOrtho (rviz)
-      X: -2.138812303543091
-      Y: -0.28643298149108887
+      X: -1.176164984703064
+      Y: -0.17474859952926636
     Saved: ~
 Window Geometry:
   Displays:
