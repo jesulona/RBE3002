@@ -169,13 +169,7 @@ class Lab4:
             #print(everyWaypoint)
             self.go_to(everyWaypoint)
     
-        """
-
-        def pickCentroid(self,msg):
-        print(len(msg.cells))
-        print(msg.cells[0])
-
-        """
+        rospy.loginfo('Phase 2 Complete!')
     
     def executePath(self, msg):
         """
