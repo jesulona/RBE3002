@@ -5,16 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
-        - /LaserScan1
-        - /Map1
-        - /CSpace1
-        - /Frontier GridCells1
-        - /Centroids1
-        - /Wavefront1
-        - /Path1
-        - /Goal1
-        - /Current Error Point1
-        - /Path Home1
       Splitter Ratio: 0.594406008720398
     Tree Height: 416
   - Class: rviz/Selection
@@ -35,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -136,7 +126,7 @@ Visualization Manager:
       Color: 114; 159; 207
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 11799
@@ -153,7 +143,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: false
       Image Topic: /raspicam_node/image
@@ -294,7 +284,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.7157961130142212
+      Angle: -1.605796217918396
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -304,11 +294,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 72.6395034790039
+      Scale: 164.41627502441406
       Target Frame: map
       Value: TopDownOrtho (rviz)
-      X: -2.000739336013794
-      Y: 0.22986452281475067
+      X: -1.1510169506072998
+      Y: 0.14660435914993286
     Saved: ~
 Window Geometry:
   Displays:
@@ -328,5 +318,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1299
-  X: 67
-  Y: 27
+  X: 204
+  Y: 68

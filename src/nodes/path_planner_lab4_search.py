@@ -507,7 +507,7 @@ class PathPlanner:
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
-        #self.initMap()
+        self.initMap()
         return self.path_to_message(mapdata, waypoints)
 
 

@@ -67,7 +67,8 @@ class Lab4:
         pathPlanner = rospy.ServiceProxy('plan_a_path', GetPlan)
         #Analyze the frontier
         #if frontiers exist, path plan to one
-
+        rospy.wait_for_service('getFrontiers')
+        rospy.sleep(.25)
         centroidResp = centroids()
 
         currPose = PoseStamped()
@@ -106,22 +107,21 @@ class Lab4:
                     totalWeight = currTotalWeight
 
 
-        #set the goal position to the location in the frontierlist
+            #set the goal position to the location in the frontierlist
             goalPose.pose.position = centroidResp.centroids[centroidResp.centroids.index(goalPoint)]
 
-        #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
-        #THIS IS THE ME'AT OF THE FUNCTION
+            #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
+            #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
 
             #rospy.sleep(.5)
-        #Once the robot is at the target centroid
-        #Recall the centroid service to see if any exist
+            #Once the robot is at the target centroid
+            #Recall the centroid service to see if any exist
             newCents = centroids()
-            rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
-
+            #rospy.loginfo('I found ' + str(len(newCents.centroids)) + ' new centroids')
             #If centroids exist, repeat the function
             if len(newCents.centroids) > 0:
                 self.phaseOne()
