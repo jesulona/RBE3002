@@ -112,7 +112,6 @@ class Lab4:
         #Get response for path plan request (ACTUALLY DO THE PATH PLANNING)
         #THIS IS THE ME'AT OF THE FUNCTION
             resp = pathPlanner(currPose,goalPose,TOL)
-            resp.plan.poses.pop(0)
             for everyWaypoint in resp.plan.poses:
                 #print(everyWaypoint)
                 self.go_to(everyWaypoint)
@@ -249,11 +248,10 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         
         #Yaw Closed Loop Controller Vals
-        kpOmega = .55    
-        kiOmega = 0.0005
-        kdOmega = 0.0011
+        kpOmega = .4
+        kiOmega = 0.0006
+        kdOmega = 0.001
         omegaInt = 0
-        omegaDir = 0
       
         kpDist = 0
         errorInt = 0    #Initialize the integral error
@@ -282,7 +280,7 @@ class Lab4:
         #Since the robot is within the tolerance, brake
         #print('BRAKING')
         for u in range(1000):
-            self.send_speed(linear_speed*(float(500-u)/1000),0)
+            self.send_speed(linear_speed*(float(1000-u)/1000),0)
         
         #print('Move Completed!')
         self.send_speed(0,0)
@@ -310,7 +308,7 @@ class Lab4:
         try:
             #angle = self.pth + angle    #Rotate x degrees relative to the current pos
             initPth = self.pth          #Store the current position
-            THRESH = .7                #Threshold for angle difference [rad]
+            THRESH = .1                #Threshold for angle difference [rad]
             
             #Adjust the angle to determine which side of the x axis it lies on
             if angle > pi:             
@@ -362,7 +360,7 @@ class Lab4:
         :param msg [PoseStamped] The target pose.
         """
         try:
-            ROT = 1    #Set in turnDirection Function
+            ROT = .75    #Set in turnDirection Function
             #SPEED = .15
             SPEED = .18
             goal = msg.pose

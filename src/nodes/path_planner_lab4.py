@@ -500,12 +500,11 @@ class PathPlanner:
         goal  = self.world_to_grid(mapdata, msg.goal.pose.position)
         print('goal is ' + str(goal))
         path  = self.a_star(mapdata, start, goal)
-        del path[0] # remove the first path value
         if len(path) > 2:
             length = int(len(path)/2.5)
             del path[-length:]
-        else:
-            print('robot in cspace!')
+        path.pop(0)
+        print('robot in cspace!')
         ## Optimize waypoints
         waypoints = PathPlanner.optimize_path(path)
         ## Return a Path message
