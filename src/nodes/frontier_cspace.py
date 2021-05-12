@@ -239,7 +239,7 @@ class Frontier:
             point.x = worldCentroid.x #xCentroid
             point.y = worldCentroid.y #yCentroid
             point.z = len(each)
-            if len(each) > 1: #get rid of all frontiers that are only 3 square long
+            if len(each) > 0: #get rid of all frontiers that are only 3 square long
                 centCells.cells.append(point)
 
         self.pubCPoint.publish(centCells)

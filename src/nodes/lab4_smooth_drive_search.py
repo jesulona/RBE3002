@@ -57,8 +57,8 @@ class Lab4:
         '''
         i = 0
 
-        # rospy.wait_for_service('plan_a_path')
-        # rospy.wait_for_service('getFrontiers')
+        rospy.wait_for_service('plan_a_path')
+        rospy.wait_for_service('getFrontiers')
     
         TOL = .1
         #Call the frontier service
@@ -68,7 +68,7 @@ class Lab4:
         #Analyze the frontier
         #if frontiers exist, path plan to one
         rospy.wait_for_service('getFrontiers')
-        rospy.sleep(.25)
+        rospy.sleep(.69)
         centroidResp = centroids()
 
         currPose = PoseStamped()
@@ -126,7 +126,14 @@ class Lab4:
             if len(newCents.centroids) > 0:
                 self.phaseOne()
         else:
-            rospy.loginfo('phase 1 complete!')
+            #Check again 
+            centroids = rospy.ServiceProxy('getFrontiers',frontierList)
+            centroidResp = centroids()
+            print("Checking 1 more time")
+            if len(centroidResp.centroids) is not 0:
+                self.phaseOne()
+            else:
+                rospy.loginfo('phase 1 complete!')
         
     
     def phaseTwo(self):
@@ -242,7 +249,7 @@ class Lab4:
         THRESH = .07    #Tolerance for distance measurement [m]
         
         #Yaw Closed Loop Controller Vals
-        kpOmega = .45
+        kpOmega = .55 #.62
         kiOmega = 0.0006
         kdOmega = 0.001
         omegaInt = 0

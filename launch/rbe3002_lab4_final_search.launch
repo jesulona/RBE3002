@@ -48,7 +48,7 @@
   <node name='path_planner' pkg='rbe3002_lab3' type='path_planner.py'/>
 
   <!--Launch Smooth drive for a smooth ride -->
-  <node name='lab4_smooth_drive_search' pkg='rbe3002_lab3' type='lab4_smooth_drive_search.py'/>
+  <!--node name='lab4_smooth_drive_search' pkg='rbe3002_lab3' type='lab4_smooth_drive_search.py'/-->
 
   <!--TODO: Launch motion node and any other required ones-->
   <!--TODO: Configure nodes for path planning and the lab 2 motion node-->
