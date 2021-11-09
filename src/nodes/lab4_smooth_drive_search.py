@@ -127,8 +127,11 @@ class Lab4:
                 self.phaseOne()
         else:
             #Check again 
+            rospy.wait_for_service('getFrontiers')
             centroids = rospy.ServiceProxy('getFrontiers',frontierList)
+            rospy.sleep(0.5)
             centroidResp = centroids()
+            rospy.sleep(0.5)
             print("Checking 1 more time")
             if len(centroidResp.centroids) is not 0:
                 self.phaseOne()
